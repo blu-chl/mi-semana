@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Semana</title>
+<style>
+* { box-sizing: border-box; }
+html { background: #0d0521; }
+body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#1e0b45 0%,#0d0521 45%,#091428 100%);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#e6edf3; min-height:100vh; }
+
+/* ── Animated background blobs (aurora effect) ── */
+.blob { position:fixed; border-radius:50%; pointer-events:none; z-index:0; filter:blur(72px); }
+#blob1 { width:650px; height:550px; top:-80px; left:-120px;
+  background:radial-gradient(circle, rgba(139,92,246,.52) 0%, transparent 68%);
+  animation: blobA 20s ease-in-out infinite alternate; }
+#blob2 { width:580px; height:580px; bottom:-120px; right:-80px;
+  background:radial-gradient(circle, rgba(59,130,246,.42) 0%, transparent 68%);
+  animation: blobB 26s ease-in-out infinite alternate; }
+#blob3 { width:460px; height:460px; top:35%; left:38%;
+  background:radial-gradient(circle, rgba(236,72,153,.28) 0%, transparent 70%);
+  animation: blobC 17s ease-in-out infinite alternate; }
+#blob4 { width:380px; height:320px; top:10%; right:15%;
+  background:radial-gradient(circle, rgba(6,182,212,.22) 0%, transparent 68%);
+  animation: blobD 22s ease-in-out infinite alternate-reverse; }
+@keyframes blobA {
+  0%   { transform:translate(0,0) scale(1); }
+  33%  { transform:translate(180px,120px) scale(1.25); }
+  66%  { transform:translate(60px,280px) scale(.9); }
+  100% { transform:translate(280px,40px) scale(1.15); }
+}
+@keyframes blobB {
+  0%   { transform:translate(0,0) scale(1); }
+  40%  { transform:translate(-220px,-140px) scale(1.3); }
+  100% { transform:translate(-90px,-280px) scale(.85); }
+}
+@keyframes blobC {
+  0%   { transform:translate(-50%,-50%) scale(1); }
+  50%  { transform:translate(-30%,-72%) scale(1.45); }
+  100% { transform:translate(-68%,-28%) scale(.88); }
+}
+@keyframes blobD {
+  0%   { transform:translate(0,0) scale(1) rotate(0deg); }
+  60%  { transform:translate(-80px,120px) scale(1.2) rotate(60deg); }
+  100% { transform:translate(60px,200px) scale(.9) rotate(-30deg); }
+}
+/* ── Ambient overlay ── */
+#ambient { position:fixed; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(ellipse 80% 55% at 0% 10%,rgba(99,102,241,.12) 0%,transparent 60%),
+              radial-gradient(ellipse 65% 65% at 100% 90%,rgba(59,130,246,.1) 0%,transparent 60%),
+              radial-gradient(ellipse 40% 30% at 85% 8%,rgba(139,92,246,.08) 0%,transparent 50%);
+  animation: ambientPulse 11s ease-in-out infinite alternate; }
+@keyframes ambientPulse { from{opacity:.6} to{opacity:1} }
+.p { position:fixed; border-radius:50%; pointer-events:none; z-index:0; animation:floatUp linear infinite; }
+@keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:1} 90%{opacity:.4} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
+
+/* ── Profile screen ── */
+#profile-screen { position:fixed; inset:0; z-index:200; background:#0d0521;
+  display:flex; align-items:center; justify-content:center; padding:24px; }
+.prof-card { display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:18px 14px; border-radius:16px; border:1px solid rgba(255,255,255,.08);
+  background:rgba(18,16,30,.9); cursor:pointer; transition:.2s; min-width:100px; }
+.prof-card:hover { border-color:rgba(99,102,241,.5); transform:translateY(-3px);
+  background:rgba(18,16,30,1); box-shadow:0 8px 32px rgba(0,0,0,.4); }
+.prof-avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; font-size:22px; font-weight:800; color:#fff; flex-shrink:0; }
+.prof-name-label { font-size:13px; font-weight:600; color:#c9d1d9; text-align:center; }
+.prof-chip { display:inline-flex; align-items:center; gap:7px; padding:5px 10px 5px 6px;
+  border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(18,16,30,.9);
+  cursor:pointer; transition:.15s; font-size:12px; font-weight:600; color:#8b949e; }
+.prof-chip:hover { background:rgba(255,255,255,.07); color:#e6edf3; }
+.prof-chip .p-dot { width:22px; height:22px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; font-size:10px; font-weight:800; color:#fff; flex-shrink:0; }
+/* ── Progress view ── */
+.stat-card { background:rgba(18,16,30,.88); border:1px solid rgba(255,255,255,.07); border-radius:14px;
+  padding:16px 18px; display:flex; flex-direction:column; gap:2px; }
+.heat-cell { width:13px; height:13px; border-radius:3px; transition:.2s; cursor:default; flex-shrink:0; }
+.prog-bar-bg { height:6px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+.prog-bar-fill { height:100%; border-radius:999px; transition:width .7s cubic-bezier(.4,0,.2,1); }
+
+/* ── Header / Nav ── */
+.mnav-tab { font-size:13px; font-weight:600; padding:6px 14px; border-radius:9px; border:1px solid transparent;
+  cursor:pointer; transition:.18s; color:#8b949e; background:transparent; display:flex; align-items:center; gap:5px; }
+.mnav-tab.active { background:rgba(99,102,241,.15); color:#a5b4fc; border-color:rgba(99,102,241,.35); }
+.mnav-tab:hover:not(.active) { background:rgba(255,255,255,.04); color:#c9d1d9; }
+.icon-btn { font-size:13px; font-weight:600; padding:6px 12px; border-radius:9px;
+  border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:#8b949e;
+  cursor:pointer; transition:.15s; }
+.icon-btn:hover { background:rgba(255,255,255,.08); color:#e6edf3; }
+
+/* ── Week Grid ── */
+.week-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; position:relative; z-index:1; }
+.week-grid { display:flex; flex-direction:column; min-width:860px; }
+.week-row { display:grid; grid-template-columns:88px repeat(7,minmax(108px,1fr));
+  border-bottom:1px solid rgba(255,255,255,.04); }
+
+/* Header row */
+.week-hdr-row { position:sticky; top:66px; z-index:12;
+  background:rgba(13,5,33,.96); backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(99,102,241,.2); }
+.day-hdr { padding:8px 6px; text-align:center; font-size:11px; font-weight:700; color:#6e7681;
+  border-right:1px solid rgba(255,255,255,.04); }
+.day-hdr.today { color:#a5b4fc; background:rgba(99,102,241,.08); }
+.day-hdr.today .day-num { color:#e6edf3; }
+.day-num { display:block; font-size:18px; font-weight:800; color:#c9d1d9; line-height:1.2; }
+.corner-cell { padding:8px 6px; display:flex; align-items:center; justify-content:center;
+  position:sticky; left:0; z-index:14; background:rgba(13,5,33,.96); }
+
+/* Block label */
+.block-label { position:sticky; left:0; z-index:5; background:rgba(13,5,33,.97);
+  padding:10px 8px; border-right:1px solid rgba(255,255,255,.07);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer; transition:background .15s; }
+.block-label:hover { background:rgba(30,11,69,.9); }
+.bl-time { font-size:9px; font-weight:700; color:#484f58; letter-spacing:.04em; text-align:center; line-height:1.6; }
+.bl-name { font-size:10px; font-weight:700; color:#6e7681; text-align:center; margin:3px 0 1px; line-height:1.3; }
+.bl-dur  { font-size:9px; color:#3d3553; }
+
+/* Activity cells */
+.week-cell { padding:5px; border-right:1px solid rgba(255,255,255,.04);
+  min-height:90px; transition:background .12s; vertical-align:top; position:relative; }
+.week-cell.today-col { background:rgba(99,102,241,.04); }
+.week-cell:hover { background:rgba(255,255,255,.02); }
+
+/* Activity card */
+.act-card { border-radius:10px; border:1px solid rgba(255,255,255,.08);
+  background:rgba(18,16,30,.9); padding:8px 9px; cursor:pointer;
+  height:100%; min-height:78px; transition:.18s; position:relative;
+  display:flex; flex-direction:column; gap:4px; }
+.act-card:hover { border-color:rgba(255,255,255,.16); transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(0,0,0,.3); }
+.act-card-top { display:flex; align-items:flex-start; gap:6px; }
+.act-emoji { font-size:16px; line-height:1; flex-shrink:0; }
+.act-title { font-size:11px; font-weight:700; color:#e6edf3; line-height:1.4; flex:1;
+  overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.act-meta { display:flex; align-items:center; gap:5px; margin-top:auto; }
+.act-prog-text { font-size:9px; font-weight:700; color:#6e7681; }
+.act-prog-bar { flex:1; height:3px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; }
+.act-prog-fill { height:100%; border-radius:999px; transition:width .4s; }
+.act-link-badge { font-size:11px; opacity:.55; flex-shrink:0; }
+.act-done-overlay { position:absolute; inset:0; border-radius:10px; background:rgba(0,0,0,.3);
+  display:flex; align-items:center; justify-content:center; font-size:18px; pointer-events:none; }
+
+/* Empty cell */
+.add-cell-btn { width:100%; min-height:78px; border:1px dashed rgba(255,255,255,.06);
+  border-radius:10px; background:transparent; cursor:pointer; color:#3d3553;
+  font-size:18px; transition:.18s; display:flex; align-items:center; justify-content:center; }
+.week-cell:hover .add-cell-btn { border-color:rgba(99,102,241,.3); color:#6366f1;
+  background:rgba(99,102,241,.04); }
+
+/* ── Habits bar ── */
+#habits-bar { position:fixed; bottom:0; left:0; right:0; z-index:30;
+  background:rgba(13,5,33,.97); backdrop-filter:blur(18px);
+  border-top:1px solid rgba(99,102,241,.2); padding:10px 16px; }
+.habits-bar-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center;
+  gap:8px; flex-wrap:wrap; }
+.habits-bar-label { font-size:10px; font-weight:700; color:#484f58;
+  text-transform:uppercase; letter-spacing:.1em; flex-shrink:0; }
+.habit-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
+  border-radius:999px; border:1px solid rgba(255,255,255,.08); background:rgba(18,16,30,.9);
+  cursor:pointer; transition:.18s; font-size:12px; font-weight:600; color:#6e7681;
+  user-select:none; }
+.habit-chip:hover:not(.done) { border-color:rgba(255,255,255,.18); color:#c9d1d9;
+  background:rgba(255,255,255,.05); }
+.habit-chip.done { background:rgba(99,102,241,.15); border-color:rgba(99,102,241,.4); color:#a5b4fc; }
+.habit-chip.done .hc-text { text-decoration:line-through; text-decoration-color:rgba(165,180,252,.45); }
+.habit-chip .hc-check { width:14px; height:14px; border-radius:50%; border:1.5px solid currentColor;
+  display:flex; align-items:center; justify-content:center; font-size:8px; flex-shrink:0; }
+.habit-chip.done .hc-check { background:#6366f1; border-color:#6366f1; color:#fff; }
+.add-habit-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 10px;
+  border-radius:999px; border:1px dashed rgba(255,255,255,.1); background:transparent;
+  cursor:pointer; font-size:11px; color:#484f58; transition:.15s; }
+.add-habit-chip:hover { border-color:rgba(99,102,241,.4); color:#818cf8; }
+
+/* ── Modals ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.78); backdrop-filter:blur(8px);
+  z-index:100; display:flex; align-items:center; justify-content:center; padding:16px;
+  opacity:0; pointer-events:none; transition:opacity .2s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-box { background:#12101e; border:1px solid rgba(139,92,246,.22); border-radius:18px;
+  padding:22px; width:100%; max-width:420px; max-height:85vh; overflow-y:auto; }
+.modal-box.wide { max-width:540px; }
+.minput { width:100%; padding:9px 12px; border-radius:10px; border:1px solid #30363d;
+  background:#0d0521; color:#e6edf3; font-size:14px; outline:none; transition:border-color .15s; }
+.minput:focus { border-color:#6366f1; }
+.mlabel { font-size:11px; font-weight:600; color:#6e7681; text-transform:uppercase;
+  letter-spacing:.07em; display:block; margin-bottom:6px; }
+
+/* Sub-task rows in modal */
+.strow { display:flex; align-items:center; gap:9px; padding:6px 8px; border-radius:8px; transition:background .12s; }
+.strow:hover { background:rgba(255,255,255,.03); }
+.strow.done .stxt { text-decoration:line-through; text-decoration-color:#484f58; color:#484f58; }
+.stxt { font-size:13px; color:#c9d1d9; flex:1; line-height:1.45; }
+.chk { appearance:none; -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
+  border:2px solid #30363d; cursor:pointer; flex-shrink:0; transition:.2s; position:relative; }
+.chk:hover:not(:checked) { transform:scale(1.1); border-color:#8b949e; }
+.chk:checked { transform:scale(1.05); background:var(--cc,#6366f1); border-color:var(--cc,#6366f1); }
+.chk::after { content:''; position:absolute; display:none; width:3px; height:6px;
+  border:2px solid #fff; border-top:none; border-left:none; transform:rotate(45deg); top:2px; left:4px; }
+.chk:checked::after { display:block; }
+.dbtn { opacity:0; font-size:11px; padding:1px 5px; border:none; background:transparent;
+  color:#6e7681; cursor:pointer; transition:.12s; border-radius:4px; }
+.strow:hover .dbtn { opacity:1; }
+.dbtn:hover { background:rgba(239,68,68,.15); color:#f87171; }
+
+/* Macro cards */
+.macro-card { background:rgba(18,16,30,.9); border:1px solid rgba(255,255,255,.07); border-radius:14px;
+  padding:14px 16px; display:flex; align-items:flex-start; gap:12px; transition:.2s; cursor:pointer; }
+.macro-card:hover { border-color:rgba(255,255,255,.13); }
+.macro-card.done { opacity:.65; }
+.macro-card.done .macro-text { text-decoration:line-through; text-decoration-color:#484f58; color:#484f58; }
+.macro-chk { width:20px; height:20px; border-radius:6px; border:2px solid #30363d; flex-shrink:0;
+  margin-top:2px; transition:.2s; display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; color:#fff; }
+.macro-card.done .macro-chk { background:#6366f1; border-color:#6366f1; }
+.macro-text { font-size:14px; font-weight:600; color:#e6edf3; line-height:1.5; }
+.macro-del { opacity:.3; font-size:11px; padding:3px 7px; border:none; background:transparent;
+  color:#6e7681; cursor:pointer; border-radius:5px; transition:.15s; flex-shrink:0; }
+.macro-del:hover { opacity:1; background:rgba(239,68,68,.15); color:#f87171; }
+
+/* Metodo cards */
+.metodo-card { border-radius:16px; padding:20px 22px; border:1px solid rgba(255,255,255,.08);
+  background:rgba(18,16,30,.85); transition:.22s; position:relative; overflow:hidden; margin-bottom:12px; }
+.metodo-card::before { content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,var(--mc,#6366f1) 0%,transparent 55%); opacity:.06; pointer-events:none; }
+.metodo-card:hover { border-color:rgba(255,255,255,.14); transform:translateY(-1px); }
+
+/* Link opts */
+.link-opt { display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px;
+  cursor:pointer; transition:.15s; border:1px solid transparent; margin-bottom:5px; }
+.link-opt:hover { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08); }
+.link-opt.sel { background:rgba(99,102,241,.1); border-color:rgba(99,102,241,.3); }
+
+/* Block list in manager */
+.bl-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); margin-bottom:6px; }
+
+/* Addwrap */
+.addwrap { max-height:0; overflow:hidden; transition:max-height .25s ease; }
+.addwrap.open { max-height:120px; }
+
+/* Color swatches */
+.swatch { width:22px; height:22px; border-radius:50%; cursor:pointer; transition:.13s;
+  flex-shrink:0; border:2.5px solid transparent; }
+.swatch.sel { border-color:#fff; box-shadow:0 0 0 2px currentColor; }
+
+/* Toast */
+#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(90px);
+  background:#1a1630; border:1px solid rgba(139,92,246,.3); color:#e6edf3; padding:9px 20px;
+  border-radius:999px; font-size:13px; transition:transform .3s; z-index:999; white-space:nowrap;
+  box-shadow:0 8px 32px rgba(0,0,0,.6); }
+#toast.show { transform:translateX(-50%) translateY(0); }
+.sec-label { font-size:10px; font-weight:700; color:#6e7681; text-transform:uppercase; letter-spacing:.1em; }
+::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#30363d; border-radius:2px; }
+</style>
+</head>
+<body>
+<!-- ══ PROFILE SCREEN ══ -->
+<div id="profile-screen">
+  <div style="width:100%;max-width:460px;position:relative;z-index:1">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:42px;margin-bottom:12px">✨</div>
+      <h1 style="font-size:26px;font-weight:800;color:#e6edf3;margin:0 0 8px;letter-spacing:-.03em">Mi Semana</h1>
+      <p style="font-size:14px;color:#6e7681;margin:0">¿Quién eres hoy?</p>
+    </div>
+    <div id="prof-list" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px"></div>
+    <div id="new-prof-wrap">
+      <button onclick="document.getElementById('new-prof-form').style.display='';document.getElementById('new-prof-name').focus();this.style.display='none'"
+        style="width:100%;padding:13px;border-radius:14px;border:1px dashed rgba(99,102,241,.35);background:rgba(99,102,241,.06);color:#818cf8;font-size:14px;font-weight:600;cursor:pointer;transition:.15s"
+        onmouseover="this.style.background='rgba(99,102,241,.12)'" onmouseout="this.style.background='rgba(99,102,241,.06)'">
+        + Nuevo perfil
+      </button>
+      <div id="new-prof-form" style="display:none;margin-top:10px">
+        <div style="display:flex;gap:8px">
+          <input id="new-prof-name" class="minput" type="text" placeholder="Tu nombre..." maxlength="24" style="flex:1;font-size:14px"
+            onkeydown="if(event.key==='Enter')createProfile()">
+          <button onclick="createProfile()" style="padding:9px 18px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Entrar</button>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:#3d3553;text-align:center;margin:18px 0 0;line-height:1.7">
+      Cada perfil tiene sus propios hábitos, rutinas y progreso.<br>Los datos se guardan en este dispositivo/navegador.
+    </p>
+  </div>
+</div>
+
+<div class="blob" id="blob1"></div>
+<div class="blob" id="blob2"></div>
+<div class="blob" id="blob3"></div>
+<div class="blob" id="blob4"></div>
+<div id="ambient"></div>
+
+<!-- ══ HEADER ══ -->
+<header style="background:rgba(13,5,33,.92);backdrop-filter:blur(18px);border-bottom:1px solid rgba(139,92,246,.15);position:sticky;top:0;z-index:20">
+  <div style="max-width:1200px;margin:0 auto;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h1 style="font-size:15px;font-weight:700;color:#e6edf3;margin:0;letter-spacing:-.02em">✨ Mi Semana</h1>
+      <span id="week-range" style="font-size:11px;color:#484f58"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        <button class="mnav-tab active" id="mnav-semana"   onclick="switchView('semana')">📅 Semana</button>
+        <button class="mnav-tab" id="mnav-progreso" onclick="switchView('progreso')">📊 Progreso</button>
+        <button class="mnav-tab" id="mnav-metas"    onclick="switchView('metas')">🏆 Metas</button>
+        <button class="mnav-tab" id="mnav-metodo"   onclick="switchView('metodo')">🧠 Metodología</button>
+      </div>
+      <button class="icon-btn" id="blocks-btn" onclick="openBlocksModal()" title="Gestionar bloques de tiempo">⚙️ Bloques</button>
+      <div class="prof-chip" id="prof-chip" onclick="openProfileSwitcher()" title="Cambiar perfil"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ VISTA: SEMANA ══ -->
+<div id="view-semana" style="padding:12px 8px 0;position:relative;z-index:1">
+  <div class="week-scroll">
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+</div>
+
+<!-- ══ VISTA: PROGRESO ══ -->
+<div id="view-progreso" style="display:none">
+  <div style="max-width:760px;margin:0 auto;padding:20px 16px 0;position:relative;z-index:1">
+    <div id="progreso-content"></div>
+  </div>
+  <div style="height:30px"></div>
+</div>
+
+<!-- ══ VISTA: METAS ══ -->
+<div id="view-metas" style="display:none">
+  <div style="max-width:760px;margin:0 auto;padding:20px 16px 0;position:relative;z-index:1">
+    <div style="border-radius:18px;padding:22px 24px;margin-bottom:18px;background:linear-gradient(135deg,rgba(251,191,36,.13) 0%,rgba(245,158,11,.08) 100%);border:1px solid rgba(251,191,36,.22);position:relative;overflow:hidden">
+      <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:56px;opacity:.12;pointer-events:none">🏆</div>
+      <p style="font-size:10px;font-weight:700;color:#fbbf24;letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px">Metas a Largo Plazo</p>
+      <p style="font-size:15px;font-weight:700;color:#e6edf3;margin:0 0 5px">Define tu norte. Recuérdate cada día a dónde vas.</p>
+      <p style="font-size:12px;color:#8b949e;margin:0;line-height:1.6">Tus metas macro son el <em style="color:#fbbf24;font-style:normal">"por qué"</em> detrás de cada tarea diaria.</p>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <p class="sec-label" style="margin:0">Mis metas macro</p>
+      <button onclick="openMacroModal()" style="font-size:12px;padding:5px 13px;border-radius:8px;border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.08);color:#fbbf24;cursor:pointer;font-weight:600;transition:.13s" onmouseover="this.style.background='rgba(251,191,36,.16)'" onmouseout="this.style.background='rgba(251,191,36,.08)'">+ Nueva meta</button>
+    </div>
+    <div id="macros-list"></div>
+    <div style="margin-top:20px;padding:15px 18px;border-radius:14px;background:rgba(18,16,30,.7);border:1px solid rgba(255,255,255,.06)">
+      <p class="sec-label" style="margin:0 0 10px">Categorías</p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px" id="cat-legend"></div>
+    </div>
+  </div>
+  <div style="height:90px"></div>
+</div>
+
+<!-- ══ VISTA: METODOLOGÍA ══ -->
+<div id="view-metodo" style="display:none">
+  <div style="max-width:760px;margin:0 auto;padding:20px 16px 0;position:relative;z-index:1">
+    <div id="metodo-content"></div>
+  </div>
+  <div style="height:90px"></div>
+</div>
+
+<!-- ══ MODAL: Profile switcher ══ -->
+<div id="prof-modal" class="modal-overlay" onclick="if(event.target===this)closeProfModal()">
+  <div class="modal-box" style="max-width:360px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700;color:#e6edf3;margin:0">👤 Perfiles</h3>
+      <button onclick="closeProfModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:#8b949e;cursor:pointer">✕</button>
+    </div>
+    <div id="prof-modal-list" style="margin-bottom:14px"></div>
+    <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:14px">
+      <div style="display:flex;gap:8px">
+        <input id="prof-modal-name" class="minput" type="text" placeholder="Nombre del nuevo perfil..." maxlength="24"
+          onkeydown="if(event.key==='Enter')createProfileFromModal()">
+        <button onclick="createProfileFromModal()" style="padding:9px 14px;border-radius:10px;border:none;background:rgba(99,102,241,.15);color:#818cf8;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">+ Crear</button>
+      </div>
+    </div>
+    <button onclick="logOut()" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#6e7681;font-size:13px;cursor:pointer;transition:.13s" onmouseover="this.style.color='#e6edf3'" onmouseout="this.style.color='#6e7681'">↩ Cambiar a otra pantalla de inicio</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: Activity Panel / Editor ══ -->
+<div id="act-modal" class="modal-overlay" onclick="if(event.target===this)closeActModal()">
+  <div class="modal-box wide" id="act-modal-box">
+    <div id="act-modal-content"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Blocks Manager ══ -->
+<div id="blocks-modal" class="modal-overlay" onclick="if(event.target===this)closeBlocksModal()">
+  <div class="modal-box wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700;color:#e6edf3;margin:0">⚙️ Bloques de Tiempo</h3>
+      <button onclick="closeBlocksModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:#8b949e;cursor:pointer">✕</button>
+    </div>
+    <p style="font-size:12px;color:#6e7681;margin:0 0 14px;line-height:1.6">Define tus franjas horarias. Se aplican a toda la semana. Puedes tener desde 30 min hasta bloques de varias horas.</p>
+    <div id="blocks-list"></div>
+    <div style="margin-top:14px;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03)">
+      <p class="mlabel" style="margin-bottom:10px">Nuevo bloque</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><label class="mlabel">Inicio</label><input id="new-bl-start" class="minput" type="time" value="09:00" style="color:#c9d1d9"></div>
+        <div><label class="mlabel">Fin</label><input id="new-bl-end" class="minput" type="time" value="11:00" style="color:#c9d1d9"></div>
+      </div>
+      <div style="margin-bottom:8px"><label class="mlabel">Nombre del bloque</label>
+        <input id="new-bl-label" class="minput" type="text" placeholder="Ej: Deep Work A, Ejercicio, Pausa..." maxlength="24">
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlabel">Color</label>
+        <div id="new-bl-colors" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px"></div>
+      </div>
+      <button onclick="addBlock()" style="width:100%;padding:9px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">+ Añadir bloque</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Nueva meta macro ══ -->
+<div id="macro-modal" class="modal-overlay" onclick="if(event.target===this)closeMacroModal()">
+  <div class="modal-box" style="max-width:460px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-size:16px;font-weight:700;color:#e6edf3;margin:0">🏆 Nueva Meta</h3>
+      <button onclick="closeMacroModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:#8b949e;cursor:pointer">✕</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="mlabel">¿Qué quieres lograr?</label>
+      <textarea id="mac-text" class="minput" rows="2" placeholder="Ej: Lanzar mi startup antes de diciembre..." style="resize:none;line-height:1.55" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitMacro();}"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px">
+      <div style="flex:1"><label class="mlabel">Categoría</label>
+        <select id="mac-cat" class="minput" style="cursor:pointer">
+          <option value="carrera">💼 Carrera</option><option value="salud">💪 Salud</option>
+          <option value="finanzas">💰 Finanzas</option><option value="relaciones">❤️ Relaciones</option>
+          <option value="personal">⭐ Personal</option><option value="aprendizaje">📚 Aprendizaje</option>
+        </select>
+      </div>
+      <div style="flex:1"><label class="mlabel">Fecha límite (opcional)</label>
+        <input id="mac-deadline" class="minput" type="date" style="color:#c9d1d9">
+      </div>
+    </div>
+    <button onclick="submitMacro()" style="width:100%;padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;font-size:14px;font-weight:600;cursor:pointer">Añadir meta</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: Add habit ══ -->
+<div id="habit-modal" class="modal-overlay" onclick="if(event.target===this)closeHabitModal()">
+  <div class="modal-box" style="max-width:360px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:700;color:#e6edf3;margin:0">+ Nuevo Hábito</h3>
+      <button onclick="closeHabitModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:#8b949e;cursor:pointer">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="width:60px"><label class="mlabel">Emoji</label>
+        <input id="new-h-emoji" class="minput" type="text" placeholder="💪" maxlength="3" style="font-size:20px;text-align:center;padding:6px 0">
+      </div>
+      <div style="flex:1"><label class="mlabel">Nombre</label>
+        <input id="new-h-text" class="minput" type="text" placeholder="Ej: Ejercicio, Leer..." maxlength="40"
+          onkeydown="if(event.key==='Enter')submitHabit()">
+      </div>
+    </div>
+    <button onclick="submitHabit()" style="width:100%;padding:10px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Añadir hábito</button>
+  </div>
+</div>
+
+<!-- ══ HABITS BAR ══ -->
+<div id="habits-bar">
+  <div class="habits-bar-inner">
+    <span class="habits-bar-label">Hoy</span>
+    <div id="habit-chips"></div>
+    <button class="add-habit-chip" onclick="openHabitModal()">+ Hábito</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Profile system ────────────────────────────────────────────────────────────
+const ACTIVE_PROF = 'rutina_active_profile';
+const PROF_LIST   = 'rutina_profiles';
+const PROF_COLORS = ['#6366f1','#10b981','#f59e0b','#ec4899','#06b6d4','#f97316','#8b5cf6','#3b82f6'];
+function profColor(name){ return PROF_COLORS[name.charCodeAt(0)%PROF_COLORS.length]; }
+function profInitial(name){ return name.trim().charAt(0).toUpperCase(); }
+function profKey(name){ return 'rutina_v6_'+(name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')||'default'); }
+function getProfiles(){ try{return JSON.parse(localStorage.getItem(PROF_LIST)||'[]')}catch(e){return [];} }
+function saveProfiles(p){ localStorage.setItem(PROF_LIST,JSON.stringify(p)); }
+function getActiveName(){ return localStorage.getItem(ACTIVE_PROF)||null; }
+
+function renderProfileScreen(){
+  const profiles=getProfiles();
+  const list=document.getElementById('prof-list'); if(!list) return;
+  list.innerHTML=profiles.map(name=>`
+    <div class="prof-card" onclick="enterProfile('${esc(name)}')">
+      <div class="prof-avatar" style="background:${profColor(name)}">${esc(profInitial(name))}</div>
+      <span class="prof-name-label">${esc(name)}</span>
+    </div>`).join('');
+}
+
+function createProfile(){
+  const name=document.getElementById('new-prof-name')?.value?.trim(); if(!name) return;
+  const profiles=getProfiles();
+  if(!profiles.includes(name)){ profiles.push(name); saveProfiles(profiles); }
+  enterProfile(name);
+}
+
+function enterProfile(name){
+  localStorage.setItem(ACTIVE_PROF, name);
+  document.getElementById('profile-screen').style.display='none';
+  initAppForProfile(name);
+}
+
+function updateProfChip(name){
+  const chip=document.getElementById('prof-chip'); if(!chip) return;
+  chip.innerHTML=`<div class="p-dot" style="background:${profColor(name)}">${profInitial(name)}</div><span>${esc(name)}</span>`;
+}
+
+function openProfileSwitcher(){
+  const profiles=getProfiles();
+  const active=getActiveName();
+  const el=document.getElementById('prof-modal-list'); if(el){
+    el.innerHTML=profiles.map(name=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+           background:${name===active?'rgba(99,102,241,.1)':'rgba(255,255,255,.03)'};
+           border:1px solid ${name===active?'rgba(99,102,241,.3)':'rgba(255,255,255,.06)'};
+           margin-bottom:6px;cursor:${name===active?'default':'pointer'};transition:.15s"
+           ${name!==active?`onclick="switchToProfile('${esc(name)}')"`:''}>
+        <div class="p-dot" style="background:${profColor(name)};width:30px;height:30px;font-size:13px">${profInitial(name)}</div>
+        <span style="font-size:13px;font-weight:600;color:${name===active?'#a5b4fc':'#c9d1d9'};flex:1">${esc(name)}</span>
+        ${name===active?'<span style="font-size:10px;color:#818cf8;font-weight:700">Activo</span>':
+          `<button onclick="event.stopPropagation();deleteProfile('${esc(name)}')" style="font-size:10px;padding:2px 7px;border:none;background:transparent;color:#484f58;cursor:pointer;border-radius:5px;transition:.12s" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#484f58'">✕</button>`}
+      </div>`).join('')||'<p style="font-size:13px;color:#484f58;text-align:center;padding:8px">Sin perfiles guardados.</p>';
+  }
+  document.getElementById('prof-modal').classList.add('open');
+}
+function closeProfModal(){ document.getElementById('prof-modal').classList.remove('open'); }
+
+function switchToProfile(name){
+  closeProfModal();
+  localStorage.setItem(ACTIVE_PROF, name);
+  initAppForProfile(name);
+  toast(`Perfil cambiado a ${name}`);
+}
+
+function createProfileFromModal(){
+  const name=document.getElementById('prof-modal-name')?.value?.trim(); if(!name) return;
+  const profiles=getProfiles();
+  if(!profiles.includes(name)){ profiles.push(name); saveProfiles(profiles); }
+  closeProfModal();
+  switchToProfile(name);
+  document.getElementById('prof-modal-name').value='';
+}
+
+function deleteProfile(name){
+  if(!confirm(`¿Eliminar el perfil "${name}" y todos sus datos?`)) return;
+  const profiles=getProfiles().filter(p=>p!==name);
+  saveProfiles(profiles);
+  try{ localStorage.removeItem(profKey(name)); }catch(e){}
+  if(getActiveName()===name){
+    localStorage.removeItem(ACTIVE_PROF);
+    openProfileSwitcher();
+  } else openProfileSwitcher();
+}
+
+function logOut(){
+  closeProfModal();
+  localStorage.removeItem(ACTIVE_PROF);
+  location.reload();
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+const TODAY_DOW = new Date().getDay();
+const TODAY_STR = (()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
+const DAY_SHORT  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAY_FULL   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const WEEK_ORDER = [1,2,3,4,5,6,0]; // Mon→Sun display order
+const COLORS = ['#6366f1','#8b5cf6','#ec4899','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#ef4444'];
+const CAT_META = {
+  carrera:     {label:'💼 Carrera',     bg:'rgba(99,102,241,.14)', bc:'rgba(99,102,241,.4)',  tc:'#818cf8'},
+  salud:       {label:'💪 Salud',       bg:'rgba(16,185,129,.12)', bc:'rgba(16,185,129,.4)',  tc:'#34d399'},
+  finanzas:    {label:'💰 Finanzas',    bg:'rgba(251,191,36,.12)', bc:'rgba(251,191,36,.4)',  tc:'#fbbf24'},
+  relaciones:  {label:'❤️ Relaciones',  bg:'rgba(236,72,153,.12)', bc:'rgba(236,72,153,.4)',  tc:'#f472b6'},
+  personal:    {label:'⭐ Personal',    bg:'rgba(139,92,246,.12)', bc:'rgba(139,92,246,.4)',  tc:'#a78bfa'},
+  aprendizaje: {label:'📚 Aprendizaje', bg:'rgba(6,182,212,.12)',  bc:'rgba(6,182,212,.4)',   tc:'#22d3ee'},
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function rgb(hex){return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2600);}
+function blockDur(start,end){const[sh,sm]=start.split(':').map(Number);const[eh,em]=end.split(':').map(Number);const m=(eh*60+em)-(sh*60+sm);if(m<=0)return'';return m>=60?`${Math.floor(m/60)}h${m%60?` ${m%60}m`:''}`:m+'m';}
+function comp(){if(!S.completions[TODAY_STR])S.completions[TODAY_STR]={s:{},h:{}};return S.completions[TODAY_STR];}
+function isSDone(id){return!!S.completions[TODAY_STR]?.s?.[id];}
+function isHDone(id){return!!S.completions[TODAY_STR]?.h?.[id];}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+// ── Default data ───────────────────────────────────────────────────────────────
+const DEF_BLOCKS = [
+  {id:'bl1', label:'Rutina Mañana',   start:'06:30', end:'08:00', color:'#6366f1'},
+  {id:'bl2', label:'Ejercicio',       start:'08:00', end:'09:30', color:'#10b981'},
+  {id:'bl3', label:'Deep Work A',     start:'09:30', end:'11:30', color:'#8b5cf6'},
+  {id:'bl4', label:'Pausa',           start:'11:30', end:'12:00', color:'#f59e0b'},
+  {id:'bl5', label:'Deep Work B',     start:'12:00', end:'13:30', color:'#8b5cf6'},
+  {id:'bl6', label:'Almuerzo',        start:'13:30', end:'14:30', color:'#f97316'},
+  {id:'bl7', label:'Trabajo / Calls', start:'14:30', end:'17:00', color:'#3b82f6'},
+  {id:'bl8', label:'Valor Personal',  start:'19:00', end:'20:00', color:'#ec4899'},
+  {id:'bl9', label:'Cena + Familia',  start:'20:00', end:'21:00', color:'#f59e0b'},
+  {id:'bl10',label:'Rutina Noche',    start:'21:00', end:'22:30', color:'#6366f1'},
+];
+
+function mkA(t,e,c,sts,hid){return{title:t,emoji:e,color:c,subtasks:sts.map((s,i)=>({id:uid(),text:s})),...(hid?{habitId:hid}:{})};}
+const DEF_WEEK = {};
+for(let d=0;d<=6;d++) DEF_WEEK[d]={};
+// Monday–Friday: full workday template
+for(const dow of [1,2,3,4,5]){
+  DEF_WEEK[dow]['bl1'] = mkA('Rutina de activación','🌅','#6366f1',['Ducha fría','Desayuno saludable','Revisar agenda']);
+  DEF_WEEK[dow]['bl2'] = mkA('Ejercicio · Cuerpo','🏋️','#10b981',['Calentamiento · 5 min','Cardio o fuerza · 25 min','Estiramientos · 5 min'],'h1');
+  DEF_WEEK[dow]['bl6'] = mkA('Almuerzo','🍽️','#f97316',['Sin pantallas','Podcast o audiolibro · 20 min']);
+  DEF_WEEK[dow]['bl8'] = mkA('Valor Personal · 1h','💡','#ec4899',['Desarrollar habilidad específica'],'h4');
+  DEF_WEEK[dow]['bl10']= mkA('Rutina desactivación','🌙','#6366f1',['Meditar o diario de gratitud','Desconexión digital','Lectura · 30 min'],'h3');
+}
+DEF_WEEK[1]['bl3'] = mkA('Deep Work — Bloque A','💻','#8b5cf6',['Revisar objetivos semanales','Tarea prioritaria #1 (Pareto)','Tarea prioritaria #2']);
+DEF_WEEK[1]['bl5'] = mkA('Deep Work — Bloque B','⚡','#8b5cf6',['Emails y comunicaciones','Reuniones del día','Tareas menores']);
+DEF_WEEK[2]['bl3'] = mkA('Ejecución — Bloque A','💻','#8b5cf6',['Tarea #1 del sprint','Tarea #2 del sprint']);
+DEF_WEEK[3]['bl3'] = mkA('Deep Work','💻','#8b5cf6',['Revisión mitad de semana','Tarea crítica #1','Tarea crítica #2']);
+DEF_WEEK[4]['bl3'] = mkA('Deep Work','💻','#8b5cf6',['Tarea de alto impacto','Proyecto en curso']);
+DEF_WEEK[5]['bl3'] = mkA('Cierre semanal','💻','#8b5cf6',['Revisión de objetivos','Inbox cero','Documentar aprendizajes']);
+DEF_WEEK[5]['bl7'] = mkA('Planificación semana','🗓️','#3b82f6',['Planificar próxima semana (Pareto)','Revisar metas largo plazo']);
+// Saturday
+DEF_WEEK[6]['bl1'] = mkA('Mañana tranquila','☀️','#f59e0b',['Desayuno sin prisas','Café lento','Lectura · 30 min']);
+DEF_WEEK[6]['bl2'] = mkA('Deporte libre','🏊','#10b981',['Actividad física a elección','Estiramientos'],'h1');
+DEF_WEEK[6]['bl6'] = mkA('Tiempo social','🤝','#f97316',['Almuerzo con familia o amigos']);
+DEF_WEEK[6]['bl8'] = mkA('Valor Personal · 1h','💡','#ec4899',['Desarrollar habilidad · 60 min'],'h4');
+// Sunday
+DEF_WEEK[0]['bl1'] = mkA('Mañana reposada','🌸','#ec4899',['Levantarse sin alarma','Desayuno completo','Lectura · 30 min']);
+DEF_WEEK[0]['bl2'] = mkA('Ejercicio suave','🚶','#10b981',['Caminata o yoga · 45 min'],'h1');
+DEF_WEEK[0]['bl5'] = mkA('Prep de semana','📋','#6366f1',['Preparar agenda del lunes','Revisar metas semanales']);
+DEF_WEEK[0]['bl10']= mkA('Rutina desactivación','🌙','#6366f1',['Meditación o gratitud','Desconexión temprana','Lectura y dormir temprano'],'h3');
+
+const DEF_HABITS = [
+  {id:'h1',emoji:'🏋️',text:'Ejercicio · Actividad física'},
+  {id:'h2',emoji:'🧠',text:'Mente · Leer o podcast · 30 min'},
+  {id:'h3',emoji:'🙏',text:'Espíritu · Meditar o agradecer'},
+  {id:'h4',emoji:'💡',text:'Valor · Desarrollar habilidad · 1h'},
+  {id:'h5',emoji:'💧',text:'Hidratación · 8 vasos de agua'},
+  {id:'h6',emoji:'🥗',text:'Nutrición · Comer saludable'},
+];
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let KEY = 'rutina_v6_default';
+let S = null;
+
+function initAppForProfile(name){
+  KEY = profKey(name);
+  try{
+    const raw = localStorage.getItem(KEY);
+    const p = JSON.parse(raw||'null');
+    S = (p?.blocks && p?.week && p?.habits) ? p : null;
+  }catch(e){S=null;}
+  if(!S){
+    S = {blocks:JSON.parse(JSON.stringify(DEF_BLOCKS)), week:JSON.parse(JSON.stringify(DEF_WEEK)),
+         habits:JSON.parse(JSON.stringify(DEF_HABITS)), completions:{}, macros:[]};
+    try{
+      const old = JSON.parse(localStorage.getItem('rutina_v5')||localStorage.getItem('rutina_v4')||'null');
+      if(old?.habits?.length) S.habits = old.habits;
+      if(old?.completions) S.completions = old.completions;
+      if(old?.macros?.length) S.macros = old.macros;
+    }catch(e){}
+  }
+  if(!S.macros) S.macros=[];
+  sv();
+  updateProfChip(name);
+  // Reset view to semana
+  activeView='semana';
+  document.getElementById('metodo-content').innerHTML=''; // allow re-render
+  renderGrid();
+  renderHabitsBar();
+  switchView('semana');
+}
+
+// ── App state ──────────────────────────────────────────────────────────────────
+let activeView = 'semana';
+let actModalDow = null, actModalBlockId = null, actModalMode = 'view'; // view | edit
+let newBlColorSel = 0;
+let actEditColorSel = 0;
+
+// ── View switching ─────────────────────────────────────────────────────────────
+function switchView(view){
+  activeView=view;
+  ['semana','progreso','metas','metodo'].forEach(v=>{
+    document.getElementById('view-'+v).style.display=v===view?'':'none';
+    const b=document.getElementById('mnav-'+v); if(b) b.classList.toggle('active',v===view);
+  });
+  document.getElementById('blocks-btn').style.display=view==='semana'?'':'none';
+  document.getElementById('habits-bar').style.display=view==='semana'?'':'none';
+  if(view==='metas')    renderMacros();
+  if(view==='metodo')   renderMetodo();
+  if(view==='progreso') renderProgreso();
+}
+
+// ── Progress view ──────────────────────────────────────────────────────────────
+function fmtDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+function renderProgreso(){
+  const el=document.getElementById('progreso-content'); if(!el) return;
+  el.innerHTML=''; // allow re-render each time
+
+  const allDates=Object.keys(S.completions).sort();
+  const activeDates=allDates.filter(d=>{
+    const c=S.completions[d];
+    return Object.keys(c.s||{}).length+Object.keys(c.h||{}).length>0;
+  });
+
+  if(!activeDates.length){
+    el.innerHTML=`<div style="text-align:center;padding:70px 20px;color:#3d3553">
+      <div style="font-size:52px;margin-bottom:18px">📊</div>
+      <p style="font-size:16px;font-weight:700;color:#6e7681;margin:0 0 8px">Aún no hay datos</p>
+      <p style="font-size:13px;color:#484f58;margin:0;line-height:1.7">Completa actividades y hábitos en la vista <strong style="color:#a78bfa">Semana</strong><br>para ver tu progreso aquí.</p>
+    </div>`;
+    return;
+  }
+
+  const totalActive=activeDates.length;
+  const firstDate=activeDates[0];
+  let totalDone=0;
+  activeDates.forEach(d=>{
+    const c=S.completions[d];
+    totalDone+=Object.keys(c.s||{}).length+Object.keys(c.h||{}).length;
+  });
+
+  // ── Streaks ──
+  let currentStreak=0, bestStreak=0, streak=0;
+  const todayD=new Date(TODAY_STR+'T12:00:00');
+  const startD=new Date(firstDate+'T12:00:00');
+  for(let d=new Date(todayD);;d.setDate(d.getDate()-1)){
+    const ds=fmtDate(d);
+    const c=S.completions[ds];
+    if(c&&Object.keys(c.s||{}).length+Object.keys(c.h||{}).length>0) currentStreak++;
+    else break;
+    if(d<=startD) break;
+  }
+  for(let d=new Date(startD);d<=todayD;d.setDate(d.getDate()+1)){
+    const ds=fmtDate(d);
+    const c=S.completions[ds];
+    if(c&&Object.keys(c.s||{}).length+Object.keys(c.h||{}).length>0){streak++;bestStreak=Math.max(bestStreak,streak);}
+    else streak=0;
+  }
+
+  // ── Habit stats ──
+  const habitStats=S.habits.map(h=>{
+    const days=activeDates.filter(d=>S.completions[d]?.h?.[h.id]).length;
+    return{...h,days,rate:totalActive>0?Math.round(days/totalActive*100):0};
+  }).sort((a,b)=>b.rate-a.rate);
+
+  // ── Weekly totals (last 12 weeks) ──
+  const weeklyData=[];
+  const wEnd=new Date(todayD);
+  // align to end of this week (Sunday)
+  while(wEnd.getDay()!==0) wEnd.setDate(wEnd.getDate()+1);
+  for(let w=11;w>=0;w--){
+    const we=new Date(wEnd); we.setDate(wEnd.getDate()-w*7);
+    const ws=new Date(we); ws.setDate(we.getDate()-6);
+    let count=0;
+    for(let d=new Date(ws);d<=we;d.setDate(d.getDate()+1)){
+      const ds=fmtDate(d); const c=S.completions[ds];
+      if(c) count+=Object.keys(c.s||{}).length+Object.keys(c.h||{}).length;
+    }
+    weeklyData.push({label:ws.toLocaleDateString('es-ES',{day:'numeric',month:'short'}),count});
+  }
+  const maxW=Math.max(...weeklyData.map(w=>w.count),1);
+
+  // ── Heatmap (last 16 weeks) ──
+  const WEEKS=16;
+  const hEnd=new Date(todayD);
+  const hStart=new Date(hEnd); hStart.setDate(hEnd.getDate()-(WEEKS*7-1));
+  while(hStart.getDay()!==1) hStart.setDate(hStart.getDate()-1);
+  const heatCells=[];
+  for(let d=new Date(hStart);d<=hEnd;d.setDate(d.getDate()+1)){
+    const ds=fmtDate(d); const c=S.completions[ds];
+    const cnt=c?Object.keys(c.s||{}).length+Object.keys(c.h||{}).length:0;
+    heatCells.push({ds,date:new Date(d),cnt,isToday:ds===TODAY_STR});
+  }
+  // Group into weeks of 7
+  const hWeeks=[];
+  for(let i=0;i<heatCells.length;i+=7) hWeeks.push(heatCells.slice(i,i+7));
+
+  function heatCol(n){
+    if(!n) return 'rgba(255,255,255,.05)';
+    if(n<3)  return 'rgba(99,102,241,.28)';
+    if(n<7)  return 'rgba(99,102,241,.55)';
+    if(n<12) return 'rgba(99,102,241,.78)';
+    return '#6366f1';
+  }
+
+  const firstFmt=new Date(firstDate+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+  const daysTracked=Math.round((todayD-startD)/(1000*60*60*24))+1;
+
+  el.innerHTML=`
+    <!-- Banner -->
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,.18) 0%,rgba(139,92,246,.12) 100%);border:1px solid rgba(99,102,241,.28);border-radius:18px;padding:22px 24px;margin-bottom:20px;position:relative;overflow:hidden">
+      <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:54px;opacity:.1;pointer-events:none">📊</div>
+      <p style="font-size:10px;font-weight:700;color:#818cf8;letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px">Tu progreso</p>
+      <p style="font-size:18px;font-weight:800;color:#e6edf3;margin:0 0 4px">Desde el ${firstFmt}</p>
+      <p style="font-size:12px;color:#8b949e;margin:0">${daysTracked} días en el sistema · ${totalActive} días con actividad registrada</p>
+    </div>
+
+    <!-- Stats grid -->
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px">
+      ${[
+        {v:totalActive,  label:'Días activos',      color:'#6366f1', emoji:'📅'},
+        {v:totalDone,    label:'Checks completados', color:'#10b981', emoji:'✅'},
+        {v:currentStreak,label:'Racha actual 🔥',   color:'#f59e0b', emoji:'🔥'},
+        {v:bestStreak,   label:'Racha récord',       color:'#ec4899', emoji:'🏆'},
+      ].map(s=>`
+        <div class="stat-card">
+          <span style="font-size:20px">${s.emoji}</span>
+          <p style="font-size:36px;font-weight:800;color:${s.color};margin:4px 0 0;line-height:1;letter-spacing:-.04em">${s.v}</p>
+          <p style="font-size:11px;color:#6e7681;margin:2px 0 0">${s.label}</p>
+        </div>`).join('')}
+    </div>
+
+    <!-- Heatmap -->
+    <div class="stat-card" style="margin-bottom:20px">
+      <p class="sec-label" style="margin:0 0 14px">Actividad — últimas ${WEEKS} semanas</p>
+      <div style="display:flex;gap:4px;align-items:flex-start;overflow-x:auto;padding-bottom:4px">
+        <div style="display:flex;flex-direction:column;gap:3px;padding-top:16px;flex-shrink:0">
+          ${['L','M','X','J','V','S','D'].map(d=>`<div style="font-size:9px;color:#484f58;height:13px;line-height:13px;width:10px">${d}</div>`).join('')}
+        </div>
+        <div style="display:flex;gap:3px;flex-shrink:0">
+          ${hWeeks.map((week,wi)=>{
+            const label=(wi===0||week[0]?.date.getDate()<=7)?week[0]?.date.toLocaleDateString('es-ES',{month:'short'}):'';
+            return `<div style="display:flex;flex-direction:column;gap:3px">
+              <div style="height:14px;font-size:9px;color:#6e7681;line-height:14px;text-align:center;white-space:nowrap">${esc(label)}</div>
+              ${week.map(cell=>`<div class="heat-cell" title="${cell.ds}: ${cell.cnt} completados"
+                style="background:${heatCol(cell.cnt)};${cell.isToday?'box-shadow:0 0 0 1.5px rgba(165,180,252,.8)':''}"></div>`).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:10px;justify-content:flex-end">
+        <span style="font-size:9px;color:#484f58">Menos</span>
+        ${[0,2,6,11,14].map(n=>`<div style="width:10px;height:10px;border-radius:2px;background:${heatCol(n)}"></div>`).join('')}
+        <span style="font-size:9px;color:#484f58">Más</span>
+      </div>
+    </div>
+
+    <!-- Weekly bars -->
+    <div class="stat-card" style="margin-bottom:20px">
+      <p class="sec-label" style="margin:0 0 14px">Actividad semanal — últimas 12 semanas</p>
+      <div style="display:flex;align-items:flex-end;gap:5px;height:90px">
+        ${weeklyData.map((w,i)=>{
+          const h=Math.max(6,Math.round(w.count/maxW*82));
+          const isLast=(i===weeklyData.length-1);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
+            <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+              <div style="width:100%;height:${h}px;border-radius:4px 4px 2px 2px;background:${isLast?'#6366f1':'rgba(99,102,241,.35)'};transition:height .5s"></div>
+            </div>
+            ${isLast?`<div style="font-size:8px;color:#818cf8;font-weight:700;white-space:nowrap">Esta</div>`:`<div style="font-size:8px;color:#3d3553;white-space:nowrap;overflow:hidden;max-width:100%;text-overflow:ellipsis">${w.count||''}</div>`}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Habit consistency -->
+    <div class="stat-card" style="margin-bottom:20px">
+      <p class="sec-label" style="margin:0 0 16px">Consistencia por hábito</p>
+      ${habitStats.length?habitStats.map(h=>`
+        <div style="margin-bottom:13px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:18px">${esc(h.emoji)}</span>
+              <span style="font-size:13px;font-weight:600;color:#c9d1d9">${esc(h.text.split('·')[0].trim())}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;color:#6e7681">${h.days} / ${totalActive} días</span>
+              <span style="font-size:13px;font-weight:800;color:${h.rate>=70?'#10b981':h.rate>=40?'#f59e0b':'#6e7681'}">${h.rate}%</span>
+            </div>
+          </div>
+          <div class="prog-bar-bg">
+            <div class="prog-bar-fill" style="width:${h.rate}%;background:linear-gradient(90deg,#6366f1,${h.rate>=70?'#10b981':h.rate>=40?'#f59e0b':'#8b5cf6'})"></div>
+          </div>
+        </div>`).join(''):'<p style="font-size:13px;color:#484f58;text-align:center;padding:12px">Añade hábitos para ver la consistencia aquí.</p>'}
+    </div>
+
+    <!-- Best day of week -->
+    ${(()=>{
+      const dowCounts=[0,0,0,0,0,0,0];
+      activeDates.forEach(d=>{
+        const dow=new Date(d+'T12:00:00').getDay();
+        const c=S.completions[d];
+        dowCounts[dow]+=Object.keys(c.s||{}).length+Object.keys(c.h||{}).length;
+      });
+      const maxDow=Math.max(...dowCounts,1);
+      const dowLabels=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      return `<div class="stat-card" style="margin-bottom:20px">
+        <p class="sec-label" style="margin:0 0 14px">Actividad por día de la semana</p>
+        <div style="display:flex;align-items:flex-end;gap:8px;height:70px">
+          ${dowCounts.map((cnt,i)=>{
+            const h=Math.max(4,Math.round(cnt/maxDow*60));
+            const best=cnt===maxDow&&cnt>0;
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
+              <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+                <div style="width:100%;height:${h}px;border-radius:4px 4px 2px 2px;background:${best?'#f59e0b':'rgba(99,102,241,.3)'}"></div>
+              </div>
+              <div style="font-size:9px;font-weight:700;color:${best?'#fbbf24':'#484f58'}">${dowLabels[i]}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <p style="font-size:11px;color:#6e7681;margin:10px 0 0;text-align:center">🏆 Tu mejor día: <strong style="color:#fbbf24">${DAY_FULL[dowCounts.indexOf(Math.max(...dowCounts))]}</strong></p>
+      </div>`;
+    })()}
+  `;
+}
+
+// ── Week grid rendering ────────────────────────────────────────────────────────
+function getWeekDates(){
+  const today=new Date(); const dow=today.getDay();
+  // Monday of current week
+  const mon=new Date(today); mon.setDate(today.getDate()-(dow===0?6:dow-1));
+  return WEEK_ORDER.map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+}
+
+function renderGrid(){
+  const grid=document.getElementById('week-grid'); if(!grid) return;
+  const dates=getWeekDates();
+  const blocks=[...S.blocks].sort((a,b)=>a.start<b.start?-1:1);
+
+  // Week range header
+  const d0=dates[0], d6=dates[6];
+  const fmt=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+  document.getElementById('week-range').textContent=`${fmt(d0)} – ${fmt(d6)} · ${d0.getFullYear()}`;
+
+  let html='';
+
+  // ── Header row ──
+  html+=`<div class="week-row week-hdr-row">
+    <div class="corner-cell">
+      <span style="font-size:9px;font-weight:700;color:#484f58;text-transform:uppercase;letter-spacing:.08em">BLOQUE</span>
+    </div>`;
+  dates.forEach((date,i)=>{
+    const dow=WEEK_ORDER[i];
+    const isToday=dow===TODAY_DOW;
+    const dateNum=date.getDate();
+    html+=`<div class="day-hdr${isToday?' today':''}">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.04em">${DAY_SHORT[dow].toUpperCase()}</span>
+      <span class="day-num">${dateNum}</span>
+    </div>`;
+  });
+  html+='</div>';
+
+  // ── Block rows ──
+  blocks.forEach(bl=>{
+    const dur=blockDur(bl.start,bl.end);
+    html+=`<div class="week-row">
+      <div class="block-label" onclick="editBlock('${bl.id}')" title="Editar bloque">
+        <div class="bl-time">${bl.start}<br>${bl.end}</div>
+        <div class="bl-name" style="color:${bl.color}">${esc(bl.label)}</div>
+        <div class="bl-dur">${dur}</div>
+      </div>`;
+    dates.forEach((date,i)=>{
+      const dow=WEEK_ORDER[i];
+      const isToday=dow===TODAY_DOW;
+      const act=S.week[dow]?.[bl.id];
+      html+=`<div class="week-cell${isToday?' today-col':''}" data-dow="${dow}" data-bl="${bl.id}">`;
+      if(act){
+        const stTotal=act.subtasks?.length||0;
+        const stDone=isToday?act.subtasks?.filter(s=>isSDone(s.id)).length:0;
+        const pct=stTotal?Math.round(stDone/stTotal*100):0;
+        const allDone=stTotal>0&&stDone===stTotal;
+        const linkedH=act.habitId?S.habits.find(h=>h.id===act.habitId):null;
+        html+=`<div class="act-card" onclick="openActPanel(${dow},'${bl.id}')"
+          style="border-left-color:${act.color||bl.color};${allDone?'opacity:.55':''}">
+          ${allDone?'<div class="act-done-overlay">✓</div>':''}
+          <div class="act-card-top">
+            <span class="act-emoji">${esc(act.emoji||'📌')}</span>
+            <span class="act-title" style="${allDone?'text-decoration:line-through;text-decoration-color:#484f58':''}">
+              ${esc(act.title)}
+            </span>
+          </div>
+          <div class="act-meta">
+            ${stTotal>0?`<span class="act-prog-text">${isToday?stDone:0}/${stTotal}</span>
+              <div class="act-prog-bar"><div class="act-prog-fill" style="width:${isToday?pct:0}%;background:${act.color||bl.color}"></div></div>`:''}
+            ${linkedH?`<span class="act-link-badge" title="Vinculado: ${esc(linkedH.text)}">${esc(linkedH.emoji)}</span>`:''}
+          </div>
+        </div>`;
+      } else {
+        html+=`<button class="add-cell-btn" onclick="openActPanel(${dow},'${bl.id}')">+</button>`;
+      }
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+
+  grid.innerHTML=html;
+}
+
+// ── Activity Panel / Editor Modal ─────────────────────────────────────────────
+function openActPanel(dow, blockId){
+  actModalDow=dow; actModalBlockId=blockId;
+  const act=S.week[dow]?.[blockId];
+  actModalMode = act ? (dow===TODAY_DOW ? 'view' : 'edit') : 'edit';
+  actEditColorSel = act ? COLORS.indexOf(act.color) : 0;
+  if(actEditColorSel<0) actEditColorSel=0;
+  renderActModal();
+  document.getElementById('act-modal').classList.add('open');
+  if(actModalMode==='edit') setTimeout(()=>document.getElementById('act-title-inp')?.focus(),80);
+}
+
+function closeActModal(){
+  document.getElementById('act-modal').classList.remove('open');
+  actModalDow=null; actModalBlockId=null;
+}
+
+function renderActModal(){
+  const dow=actModalDow, blockId=actModalBlockId;
+  const bl=S.blocks.find(b=>b.id===blockId);
+  const act=S.week[dow]?.[blockId];
+  const isToday=dow===TODAY_DOW;
+  const el=document.getElementById('act-modal-content');
+
+  const blLabel=bl?`${bl.start}–${bl.end} · ${bl.label}`:'';
+
+  if(actModalMode==='view' && act){
+    // ── VIEW MODE (today's interactive checks) ──
+    const stTotal=act.subtasks?.length||0;
+    const stDone=act.subtasks?.filter(s=>isSDone(s.id)).length||0;
+    const linkedH=act.habitId?S.habits.find(h=>h.id===act.habitId):null;
+    const pct=stTotal?Math.round(stDone/stTotal*100):0;
+
+    el.innerHTML=`
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:32px;line-height:1">${esc(act.emoji||'📌')}</span>
+          <div>
+            <p style="font-size:16px;font-weight:700;color:#e6edf3;margin:0">${esc(act.title)}</p>
+            <p style="font-size:11px;color:#6e7681;margin:4px 0 0">${DAY_FULL[dow]} · ${esc(blLabel)}</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="actModalMode='edit';actEditColorSel=Math.max(0,${COLORS.indexOf(act.color)});renderActModal()"
+            style="font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#8b949e;cursor:pointer;transition:.13s"
+            onmouseover="this.style.color='#e6edf3'" onmouseout="this.style.color='#8b949e'">✏️ Editar</button>
+          <button onclick="closeActModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:#8b949e;cursor:pointer">✕</button>
+        </div>
+      </div>
+      ${stTotal>0?`
+      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:4px 10px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:11px;font-weight:700;color:${act.color||bl?.color||'#6366f1'}">${stDone}/${stTotal}</span>
+        <div style="flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${act.color||bl?.color||'#6366f1'};transition:width .4s"></div>
+        </div>
+        <span style="font-size:11px;color:#6e7681">${pct}%</span>
+      </div>`:
+      '<p style="font-size:12px;color:#3d3553;margin:0 0 14px">Sin pasos definidos — edita la actividad para añadir checks.</p>'}
+      <div id="modal-stlist">
+        ${act.subtasks?.map(s=>{
+          const done=isSDone(s.id);
+          return `<div class="strow${done?' done':''}">
+            <input type="checkbox" class="chk" ${done?'checked':''} style="--cc:${act.color||bl?.color||'#6366f1'}"
+              onchange="toggleModalSub('${blockId}','${s.id}',this)">
+            <span class="stxt">${esc(s.text)}</span>
+          </div>`;
+        }).join('')||''}
+      </div>
+      ${linkedH?`
+      <div style="margin-top:14px;padding:10px 13px;border-radius:10px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2)">
+        <span style="font-size:11px;color:#818cf8">🔗 Auto-vinculado a <strong>${esc(linkedH.emoji)} ${esc(linkedH.text)}</strong> — se marca al completar todos los pasos</span>
+      </div>`:''}`;
+  } else {
+    // ── EDIT MODE ──
+    const existingAct = act || {title:'',emoji:'',color:COLORS[0],subtasks:[],habitId:null};
+    const sts=existingAct.subtasks||[];
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <p style="font-size:15px;font-weight:700;color:#e6edf3;margin:0">
+            ${act?'Editar actividad':'Nueva actividad'}
+          </p>
+          <p style="font-size:11px;color:#6e7681;margin:4px 0 0">${DAY_FULL[dow]} · ${esc(blLabel)}</p>
+        </div>
+        <button onclick="closeActModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:#8b949e;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="width:66px">
+          <label class="mlabel">Emoji</label>
+          <input id="act-emoji-inp" class="minput" type="text" value="${esc(existingAct.emoji||'')}" placeholder="📌" maxlength="3"
+            style="font-size:22px;text-align:center;padding:6px 0">
+        </div>
+        <div style="flex:1">
+          <label class="mlabel">Nombre de la actividad</label>
+          <input id="act-title-inp" class="minput" type="text" value="${esc(existingAct.title||'')}"
+            placeholder="Ej: Deep Work, Ejercicio, Almuerzo..." maxlength="50"
+            onkeydown="if(event.key==='Enter')saveActivity()">
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlabel">Color</label>
+        <div id="act-edit-colors" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="mlabel">Pasos / Checks de esta actividad</label>
+        <div id="act-edit-stlist">
+          ${sts.map((s,i)=>`
+            <div class="strow" style="background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:4px">
+              <span style="font-size:12px;color:#6e7681;width:16px;text-align:right;flex-shrink:0">${i+1}</span>
+              <input class="act-st-inp" data-sid="${s.id}" value="${esc(s.text)}" type="text" maxlength="60"
+                style="flex:1;font-size:13px;background:transparent;border:none;outline:none;color:#c9d1d9;padding:2px 4px">
+              <button onclick="removeActSt('${s.id}')" class="dbtn" style="opacity:.6">✕</button>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:7px;margin-top:6px">
+          <input id="act-new-st" class="minput" type="text" placeholder="Añadir paso..." maxlength="60" style="flex:1;font-size:13px;padding:7px 10px"
+            onkeydown="if(event.key==='Enter')addActSt()">
+          <button onclick="addActSt()" style="padding:7px 12px;border-radius:8px;border:none;background:rgba(99,102,241,.15);color:#818cf8;font-size:13px;font-weight:600;cursor:pointer">+</button>
+        </div>
+      </div>
+      <div style="margin-bottom:20px">
+        <label class="mlabel">Vincular a hábito (auto-marca al completar todos los pasos)</label>
+        <div id="act-link-list">
+          <div class="link-opt${!existingAct.habitId?' sel':''}" onclick="selectActHabit(null)">
+            <span style="font-size:18px">🚫</span>
+            <p style="font-size:13px;font-weight:600;color:#6e7681;margin:0;flex:1">Sin vínculo</p>
+          </div>
+          ${S.habits.map(h=>`
+            <div class="link-opt${existingAct.habitId===h.id?' sel':''}" onclick="selectActHabit('${h.id}')">
+              <span style="font-size:18px">${esc(h.emoji)}</span>
+              <p style="font-size:13px;font-weight:600;color:#c9d1d9;margin:0;flex:1">${esc(h.text)}</p>
+              ${existingAct.habitId===h.id?'<span style="font-size:11px;color:#818cf8;font-weight:700">✓</span>':''}
+            </div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveActivity()" style="flex:1;padding:11px;border-radius:12px;border:none;background:#6366f1;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
+          ${act?'Guardar cambios':'Añadir actividad'}
+        </button>
+        ${act?`<button onclick="deleteActivity(${dow},'${blockId}')" style="padding:11px 16px;border-radius:12px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#f87171;font-size:13px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(239,68,68,.1)'" onmouseout="this.style.background='transparent'">Eliminar</button>`:''}
+      </div>`;
+    // Build color swatches
+    buildActEditColors();
+  }
+}
+
+let actEditLinkedHabit = null;
+function selectActHabit(hid){
+  actEditLinkedHabit=hid;
+  document.querySelectorAll('#act-link-list .link-opt').forEach(el=>el.classList.remove('sel'));
+  const idx=hid?S.habits.findIndex(h=>h.id===hid)+1:0;
+  const opts=document.querySelectorAll('#act-link-list .link-opt');
+  if(opts[idx]) opts[idx].classList.add('sel');
+}
+
+function buildActEditColors(){
+  const el=document.getElementById('act-edit-colors'); if(!el) return;
+  const act=S.week[actModalDow]?.[actModalBlockId];
+  if(act) actEditColorSel=Math.max(0,COLORS.indexOf(act.color));
+  el.innerHTML=COLORS.map((c,i)=>`
+    <div class="swatch${i===actEditColorSel?' sel':''}" style="background:${c};color:${c}"
+      onclick="actEditColorSel=${i};buildActEditColors()"></div>`).join('');
+}
+
+function removeActSt(sid){
+  const act=S.week[actModalDow]?.[actModalBlockId];
+  if(!act) return;
+  act.subtasks=act.subtasks.filter(s=>s.id!==sid);
+  sv();
+  // Re-render just the st list
+  const el=document.getElementById('act-edit-stlist'); if(!el) return;
+  el.innerHTML=act.subtasks.map((s,i)=>`
+    <div class="strow" style="background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:4px">
+      <span style="font-size:12px;color:#6e7681;width:16px;text-align:right;flex-shrink:0">${i+1}</span>
+      <input class="act-st-inp" data-sid="${s.id}" value="${esc(s.text)}" type="text" maxlength="60"
+        style="flex:1;font-size:13px;background:transparent;border:none;outline:none;color:#c9d1d9;padding:2px 4px">
+      <button onclick="removeActSt('${s.id}')" class="dbtn" style="opacity:.6">✕</button>
+    </div>`).join('');
+}
+
+function addActSt(){
+  const inp=document.getElementById('act-new-st'); if(!inp) return;
+  const txt=inp.value.trim(); if(!txt) return;
+  const act=S.week[actModalDow]?.[actModalBlockId];
+  const newSt={id:uid(),text:txt};
+  if(act){ act.subtasks.push(newSt); sv(); }
+  else {
+    // Store temporarily in DOM — will be saved on saveActivity
+    const el=document.getElementById('act-edit-stlist');
+    const idx=el.querySelectorAll('.act-st-inp').length;
+    const div=document.createElement('div');
+    div.className='strow'; div.style.cssText='background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:4px';
+    div.innerHTML=`<span style="font-size:12px;color:#6e7681;width:16px;text-align:right;flex-shrink:0">${idx+1}</span>
+      <input class="act-st-inp" data-sid="${newSt.id}" value="${esc(txt)}" type="text" maxlength="60"
+        style="flex:1;font-size:13px;background:transparent;border:none;outline:none;color:#c9d1d9;padding:2px 4px">
+      <button class="dbtn" style="opacity:.6" onclick="this.closest('.strow').remove()">✕</button>`;
+    el.appendChild(div);
+  }
+  inp.value=''; inp.focus();
+  if(act) removeActSt('__refresh_only__'); // refresh list count
+}
+
+function saveActivity(){
+  const dow=actModalDow, blockId=actModalBlockId;
+  const title=document.getElementById('act-title-inp')?.value?.trim();
+  if(!title){document.getElementById('act-title-inp')?.focus();return;}
+  const emoji=document.getElementById('act-emoji-inp')?.value?.trim()||'📌';
+  const color=COLORS[actEditColorSel]||COLORS[0];
+  // Collect subtasks from DOM
+  const stInputs=document.querySelectorAll('#act-edit-stlist .act-st-inp');
+  const subtasks=[];
+  stInputs.forEach(inp=>{const t=inp.value.trim();if(t)subtasks.push({id:inp.dataset.sid||uid(),text:t});});
+  // Collect habit link
+  const selOpt=document.querySelector('#act-link-list .link-opt.sel');
+  const habitId=actEditLinkedHabit!==undefined?actEditLinkedHabit:null;
+  // Actually read from DOM state:
+  let linkedHabitId=null;
+  document.querySelectorAll('#act-link-list .link-opt').forEach((el,i)=>{
+    if(el.classList.contains('sel')&&i>0) linkedHabitId=S.habits[i-1]?.id||null;
+  });
+  if(!S.week[dow]) S.week[dow]={};
+  S.week[dow][blockId]={title,emoji,color,subtasks,...(linkedHabitId?{habitId:linkedHabitId}:{})};
+  sv(); closeActModal(); renderGrid(); renderHabitsBar();
+  toast('Actividad guardada ✓');
+}
+
+function deleteActivity(dow,blockId){
+  if(!confirm('¿Eliminar esta actividad de la plantilla?')) return;
+  if(S.week[dow]) delete S.week[dow][blockId];
+  sv(); closeActModal(); renderGrid();
+  toast('Actividad eliminada');
+}
+
+// ── Sub-task toggle in view modal ──────────────────────────────────────────────
+function toggleModalSub(blockId, stId, checkbox){
+  const c=comp();
+  if(checkbox.checked) c.s[stId]=true; else delete c.s[stId];
+  sv();
+  // Update row appearance inline
+  const row=checkbox.closest('.strow');
+  if(row) row.classList.toggle('done',checkbox.checked);
+  // Update grid cell progress
+  renderGrid();
+  renderHabitsBar();
+  // Auto-complete habit
+  checkAutoComplete(TODAY_DOW, blockId);
+}
+
+function checkAutoComplete(dow, blockId){
+  if(dow!==TODAY_DOW) return;
+  const act=S.week[dow]?.[blockId]; if(!act||!act.habitId||!act.subtasks.length) return;
+  const allDone=act.subtasks.every(s=>isSDone(s.id));
+  if(allDone&&!isHDone(act.habitId)){
+    const c=comp(); c.h[act.habitId]=true; sv();
+    renderHabitsBar();
+    const h=S.habits.find(h=>h.id===act.habitId);
+    if(h) toast(`✨ ${h.emoji} "${h.text.split('·')[0].trim()}" completado automáticamente! 🎉`);
+  }
+}
+
+// ── Habits bar ─────────────────────────────────────────────────────────────────
+function renderHabitsBar(){
+  const el=document.getElementById('habit-chips'); if(!el) return;
+  const today=new Date();
+  const label=document.querySelector('.habits-bar-label');
+  if(label) label.textContent=today.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+  el.innerHTML=S.habits.map(h=>{
+    const done=isHDone(h.id);
+    return `<div class="habit-chip${done?' done':''}" onclick="toggleHabit('${h.id}')">
+      <span>${esc(h.emoji)}</span>
+      <span class="hc-text">${esc(h.text.split('·')[0].trim())}</span>
+      <div class="hc-check">${done?'✓':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleHabit(hid){
+  const c=comp(); if(c.h[hid]) delete c.h[hid]; else c.h[hid]=true;
+  sv(); renderHabitsBar(); renderGrid();
+}
+
+// ── Habit modal ────────────────────────────────────────────────────────────────
+function openHabitModal(){document.getElementById('habit-modal').classList.add('open');setTimeout(()=>document.getElementById('new-h-emoji').focus(),80);}
+function closeHabitModal(){document.getElementById('habit-modal').classList.remove('open');}
+function submitHabit(){
+  const emoji=document.getElementById('new-h-emoji').value.trim()||'⭐';
+  const text=document.getElementById('new-h-text').value.trim(); if(!text) return;
+  S.habits.push({id:'h'+uid(),emoji,text}); sv(); closeHabitModal(); renderHabitsBar(); renderGrid();
+  document.getElementById('new-h-emoji').value=''; document.getElementById('new-h-text').value='';
+  toast('Hábito añadido ✓');
+}
+
+// ── Blocks manager ─────────────────────────────────────────────────────────────
+function openBlocksModal(){
+  renderBlocksList();
+  buildNewBlColors();
+  document.getElementById('blocks-modal').classList.add('open');
+}
+function closeBlocksModal(){document.getElementById('blocks-modal').classList.remove('open');}
+
+function renderBlocksList(){
+  const el=document.getElementById('blocks-list'); if(!el) return;
+  const sorted=[...S.blocks].sort((a,b)=>a.start<b.start?-1:1);
+  el.innerHTML=sorted.map(bl=>`
+    <div class="bl-item">
+      <div style="width:8px;height:8px;border-radius:50%;background:${bl.color};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:13px;font-weight:700;color:#e6edf3;margin:0">${esc(bl.label)}</p>
+        <p style="font-size:11px;color:#6e7681;margin:2px 0 0">${bl.start} – ${bl.end} · ${blockDur(bl.start,bl.end)}</p>
+      </div>
+      <button onclick="deleteBlock('${bl.id}')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:none;background:transparent;color:#6e7681;cursor:pointer;transition:.12s" onmouseover="this.style.background='rgba(239,68,68,.15)';this.style.color='#f87171'" onmouseout="this.style.background='transparent';this.style.color='#6e7681'">✕</button>
+    </div>`).join('');
+}
+
+function buildNewBlColors(){
+  const el=document.getElementById('new-bl-colors'); if(!el) return;
+  el.innerHTML=COLORS.map((c,i)=>`
+    <div class="swatch${i===newBlColorSel?' sel':''}" style="background:${c};color:${c}"
+      onclick="newBlColorSel=${i};buildNewBlColors()"></div>`).join('');
+}
+
+function addBlock(){
+  const label=document.getElementById('new-bl-label').value.trim(); if(!label){document.getElementById('new-bl-label').focus();return;}
+  const start=document.getElementById('new-bl-start').value;
+  const end=document.getElementById('new-bl-end').value;
+  if(!start||!end||start>=end){toast('⚠️ Revisa los horarios del bloque');return;}
+  const color=COLORS[newBlColorSel]||COLORS[0];
+  S.blocks.push({id:'bl'+uid(),label,start,end,color});
+  sv(); renderBlocksList(); renderGrid();
+  document.getElementById('new-bl-label').value='';
+  toast(`Bloque "${label}" añadido ✓`);
+}
+
+function deleteBlock(id){
+  const bl=S.blocks.find(b=>b.id===id);
+  if(!confirm(`¿Eliminar el bloque "${bl?.label}"? Las actividades asignadas a este bloque también se perderán.`)) return;
+  S.blocks=S.blocks.filter(b=>b.id!==id);
+  // Remove activities for this block in all days
+  for(let d=0;d<=6;d++){if(S.week[d]) delete S.week[d][id];}
+  sv(); renderBlocksList(); renderGrid();
+  toast('Bloque eliminado');
+}
+
+function editBlock(id){
+  openBlocksModal();
+}
+
+// ── Metas macro ────────────────────────────────────────────────────────────────
+function openMacroModal(){
+  document.getElementById('mac-text').value='';
+  document.getElementById('mac-cat').value='carrera';
+  document.getElementById('mac-deadline').value='';
+  document.getElementById('macro-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('mac-text').focus(),100);
+}
+function closeMacroModal(){document.getElementById('macro-modal').classList.remove('open');}
+function submitMacro(){
+  const text=document.getElementById('mac-text').value.trim(); if(!text) return;
+  const cat=document.getElementById('mac-cat').value;
+  const deadline=document.getElementById('mac-deadline').value;
+  S.macros.push({id:'m'+uid(),text,cat,deadline,done:false});
+  sv(); closeMacroModal(); renderMacros(); toast('¡Meta añadida! 🏆');
+}
+function toggleMacro(id){const m=S.macros.find(x=>x.id===id);if(!m)return;m.done=!m.done;sv();renderMacros();if(m.done)toast('¡Meta completada! 🎉');}
+function delMacro(id){S.macros=S.macros.filter(x=>x.id!==id);sv();renderMacros();}
+function renderMacros(){
+  const list=document.getElementById('macros-list');if(!list)return;
+  const leg=document.getElementById('cat-legend');
+  if(leg) leg.innerHTML=Object.values(CAT_META).map(c=>`<span style="font-size:10px;font-weight:700;padding:4px 11px;border-radius:999px;background:${c.bg};border:1px solid ${c.bc};color:${c.tc}">${c.label}</span>`).join('');
+  if(!S.macros.length){list.innerHTML=`<div style="text-align:center;padding:48px 20px;color:#3d3553"><div style="font-size:44px;margin-bottom:14px">🏆</div><p style="font-size:14px;font-weight:600;margin:0 0 5px;color:#6e7681">Sin metas todavía</p><p style="font-size:12px;margin:0">Añade tu primera meta a largo plazo</p></div>`;return;}
+  const active=S.macros.filter(m=>!m.done), done=S.macros.filter(m=>m.done);
+  const renderList=arr=>arr.map(m=>{
+    const c=CAT_META[m.cat]||CAT_META.personal;
+    const dl=m.deadline?new Date(m.deadline+' ').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):null;
+    const overdue=m.deadline&&!m.done&&new Date(m.deadline)<new Date();
+    return `<div class="macro-card${m.done?' done':''}" onclick="toggleMacro('${m.id}')" style="margin-bottom:8px;border-left:3px solid ${c.bc}">
+      <div class="macro-chk">${m.done?'✓':''}</div>
+      <div style="flex:1;min-width:0">
+        <p class="macro-text" style="margin:0">${esc(m.text)}</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px;background:${c.bg};border:1px solid ${c.bc};color:${c.tc}">${c.label}</span>
+          ${dl?`<span style="font-size:11px;color:${overdue?'#f87171':'#6e7681'}">${overdue?'⚠️ ':''}${dl}</span>`:''}
+        </div>
+      </div>
+      <button class="macro-del" onclick="event.stopPropagation();delMacro('${m.id}')">✕</button>
+    </div>`;
+  }).join('');
+  list.innerHTML=renderList(active)+(done.length?`<div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)"><p class="sec-label" style="margin:0 0 10px">Completadas ✓</p>${renderList(done)}</div>`:'');
+}
+
+// ── Metodología (kept intact) ──────────────────────────────────────────────────
+const METODO_CARDS = [
+  {emoji:'🔥',title:'Ley de Laborit — Lo más difícil primero',color:'#ef4444',short:'El cerebro busca huir del estímulo desagradable. Si evitas la tarea difícil, el estrés acumulado paraliza el resto del día.',why:'Henri Laborit descubrió que cuando el cerebro anticipa un estímulo desagradable, genera un circuito de huida. Cada hora que retrasas la tarea difícil, el miedo crece y la energía cae.',steps:['Antes de dormir: anota tu tarea #1 más difícil de mañana','Al despertar: sin móvil, sin email — ve directo a esa tarea','Trabaja en ella al menos 25 minutos. Después, todo es cuesta abajo']},
+  {emoji:'📊',title:'Principio de Pareto — El 80/20',color:'#6366f1',short:'El 80% de tus resultados proviene del 20% de tus acciones.',why:'Vilfredo Pareto observó que el 80% de la tierra en Italia pertenecía al 20% de la gente. Aplicado a ti: 2-3 tareas generan el grueso de tu valor semanal.',steps:['Cada domingo: lista TODAS las tareas de la semana','Pregunta de cada una: ¿genera más del 5% de mis resultados?','Las 2-3 que más impactan = bloquéalas primero en tu agenda']},
+  {emoji:'⏱',title:'Ley de Parkinson — Deadline a todo',color:'#f59e0b',short:'El trabajo se expande hasta ocupar el tiempo que le asignamos.',why:'Cyril Northcote Parkinson formuló esta ley en 1955. Sin urgencia, el cerebro añade pasos innecesarios. Los deadlines artificiales crean el foco que la motivación no garantiza.',steps:['Antes de cada tarea: decide explícitamente cuánto tiempo le das','Pon un temporizador visible. Cuando suene, para o entrega','Empieza con bloques de 25 min (Pomodoro) para calibrar tu velocidad']},
+  {emoji:'🎯',title:'Regla de los 20 minutos',color:'#10b981',short:'20 minutos diarios enfocados en una habilidad = 120 horas al año.',why:'La consistencia mínima supera a los esfuerzos esporádicos enormes. El cerebro consolida el aprendizaje durante el sueño.',steps:['Elige UNA habilidad a desarrollar este mes','Bloquea exactamente 20 min, mismo horario cada día','Practica con intención total: sin móvil, sin notificaciones']},
+  {emoji:'🌅',title:'Rutina de Activación',color:'#06b6d4',short:'Tu cerebro necesita un ritual de encendido.',why:'Los rituales crean señales neuronales condicionadas. Con suficiente repetición, la ducha + agenda = modo foco activado automáticamente.',steps:['Define una secuencia corta de 30-45 min','Hazla en el mismo orden todos los días','Regla de oro: no abrir el móvil hasta terminar la rutina']},
+  {emoji:'🌙',title:'Rutina de Desactivación',color:'#8b5cf6',short:'La calidad de tu descanso determina la calidad del día siguiente.',why:'La melatonina se inhibe con la luz azul. Harvard Sleep Medicine: reducir la estimulación 60 minutos antes mejora la calidad del sueño hasta un 40%.',steps:['1h antes de dormir: pantallas apagadas','Escribe 3 cosas concretas por las que estás agradecido hoy','Lee ficción o algo sin relación con el trabajo']},
+  {emoji:'⚡',title:'Efecto Dominó',color:'#ec4899',short:'Una pieza de dominó puede derribar una pieza 1.5x más grande.',why:'No es la motivación lo que crea el cambio duradero; es el primer hábito que activa los siguientes en cadena.',steps:['Pregunta: ¿qué hábito, cuando lo cumplo, mejora todo lo demás?','Para muchas personas es el ejercicio matutino o la meditación','Protege ese hábito bisagra incluso cuando el resto del día se desmorona']},
+  {emoji:'💀',title:'Eliminar los tiempos muertos',color:'#f97316',short:'El tiempo muerto no existe. Existe el tiempo mal aprovechado.',why:'Recuperar 1h diaria de tiempos muertos equivale a 15 días extra de trabajo al año.',steps:['Lista los tiempos muertos de tu día (gym, metro, coche, cocina)','Asigna a cada uno una actividad concreta: podcast, audiolibro, repaso','Prepara el contenido la noche anterior']},
+];
+
+function renderMetodo(){
+  const el=document.getElementById('metodo-content');if(!el||el.children.length)return;
+  function renderCard(c){
+    const stepsHTML=`<div><p style="font-size:10px;font-weight:700;color:#6e7681;letter-spacing:.1em;text-transform:uppercase;margin:0 0 10px">⚡ Cómo aplicarlo hoy</p><div style="display:flex;flex-direction:column;gap:8px">${c.steps.map((s,i)=>`<div style="display:flex;align-items:flex-start;gap:11px"><div style="width:21px;height:21px;border-radius:50%;flex-shrink:0;margin-top:1px;background:rgba(${rgb(c.color)},.14);border:1px solid rgba(${rgb(c.color)},.32);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${c.color}">${i+1}</div><p style="font-size:13px;color:#c9d1d9;margin:0;line-height:1.6;flex:1">${esc(s)}</p></div>`).join('')}</div></div>`;
+    return `<div class="metodo-card" style="--mc:${c.color}"><div style="display:flex;align-items:flex-start;gap:14px"><div style="font-size:30px;line-height:1;flex-shrink:0;margin-top:2px">${c.emoji}</div><div style="flex:1;min-width:0"><p style="font-size:15px;font-weight:700;color:#e6edf3;margin:0 0 7px">${esc(c.title)}</p><p style="font-size:13px;color:#8b949e;margin:0 0 14px;line-height:1.65">${esc(c.short)}</p><div style="background:rgba(${rgb(c.color)},.07);border:1px solid rgba(${rgb(c.color)},.2);border-radius:11px;padding:13px 15px;margin-bottom:13px"><p style="font-size:10px;font-weight:700;color:${c.color};letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px">🔬 Por qué funciona</p><p style="font-size:13px;color:#c9d1d9;margin:0;line-height:1.65">${esc(c.why)}</p></div>${stepsHTML}</div></div></div>`;
+  }
+  function sectionHeader(emoji,title,subtitle,ac){return `<div style="display:flex;align-items:center;gap:12px;padding:22px 0 14px"><div style="width:38px;height:38px;border-radius:12px;background:rgba(${rgb(ac)},.12);border:1px solid rgba(${rgb(ac)},.25);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${emoji}</div><div style="flex:1"><p style="font-size:14px;font-weight:700;color:#e6edf3;margin:0">${title}</p><p style="font-size:11px;color:#6e7681;margin:3px 0 0">${subtitle}</p></div></div>`;}
+  el.innerHTML=sectionHeader('⚡','Metodología de Productividad','Adrià Solà Pastor · Estructurar el día con base científica','#6366f1')+METODO_CARDS.map(renderCard).join('');
+}
+
+// ── Particles ──────────────────────────────────────────────────────────────────
+function spawnParticles(){
+  const pColors=['rgba(139,92,246,.8)','rgba(99,102,241,.7)','rgba(236,72,153,.6)','rgba(59,130,246,.7)','rgba(167,139,250,.7)','rgba(248,113,113,.5)','rgba(52,211,153,.5)','rgba(251,191,36,.45)','rgba(139,92,246,.55)','rgba(6,182,212,.55)'];
+  const sizes=[2,3,2,4,2,3,2,3,2,3];
+  for(let i=0;i<10;i++){const p=document.createElement('div');p.className='p';p.style.cssText=`width:${sizes[i]}px;height:${sizes[i]}px;left:${3+i*9}%;background:radial-gradient(circle,${pColors[i]},transparent);animation-duration:${13+i*2.5}s;animation-delay:${i*1.8}s;`;document.body.appendChild(p);}
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+(function boot(){
+  spawnParticles();
+  document.body.style.paddingBottom='76px';
+  const activeName = getActiveName();
+  if(activeName){
+    // Already have a profile — go straight in
+    document.getElementById('profile-screen').style.display='none';
+    initAppForProfile(activeName);
+  } else {
+    // Show profile selection screen
+    renderProfileScreen();
+    // Keep app hidden (profile-screen covers everything)
+  }
+})();
+</script>
+</body>
+</html>
