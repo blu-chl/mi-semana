@@ -596,10 +596,21 @@ function isSDone(id){return!!S.completions[TODAY_STR]?.s?.[id];}
 function isHDone(id){return!!S.completions[TODAY_STR]?.h?.[id];}
 function sv(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
-// ── Default data — vacío, el usuario construye su propia rutina ────────────────
-const DEF_BLOCKS = [];   // sin bloques por defecto
-const DEF_WEEK   = {0:{},1:{},2:{},3:{},4:{},5:{},6:{}};
-const DEF_HABITS = [];   // sin hábitos por defecto
+// ── Default data — bloques base, actividades y hábitos vacíos ─────────────────
+const DEF_BLOCKS = [
+  {id:'bl1', label:'Mañana',          start:'06:30', end:'08:00', color:'#6366f1'},
+  {id:'bl2', label:'Ejercicio',       start:'08:00', end:'09:30', color:'#10b981'},
+  {id:'bl3', label:'Trabajo A',       start:'09:30', end:'11:30', color:'#8b5cf6'},
+  {id:'bl4', label:'Pausa',           start:'11:30', end:'12:00', color:'#f59e0b'},
+  {id:'bl5', label:'Trabajo B',       start:'12:00', end:'13:30', color:'#8b5cf6'},
+  {id:'bl6', label:'Almuerzo',        start:'13:30', end:'14:30', color:'#f97316'},
+  {id:'bl7', label:'Tarde',           start:'14:30', end:'17:00', color:'#3b82f6'},
+  {id:'bl8', label:'Proyecto personal',start:'19:00', end:'20:00', color:'#ec4899'},
+  {id:'bl9', label:'Cena',            start:'20:00', end:'21:00', color:'#f59e0b'},
+  {id:'bl10',label:'Noche',           start:'21:00', end:'22:30', color:'#6366f1'},
+];
+const DEF_WEEK   = {0:{},1:{},2:{},3:{},4:{},5:{},6:{}};  // actividades vacías
+const DEF_HABITS = [];                                      // hábitos vacíos
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let KEY = 'rutina_v6_default';
