@@ -6,24 +6,25 @@
 <title>Mi Semana</title>
 <style>
 * { box-sizing: border-box; }
-html { background: #0d0521; }
-body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#1e0b45 0%,#0d0521 45%,#091428 100%);
+:root { --header-h: 88px; }
+html { background: #07090f; }
+body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#0d1530 0%,#07090f 50%,#05080d 100%);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#e6edf3; min-height:100vh; }
 
-/* ── Animated background blobs (aurora effect) ── */
-.blob { position:fixed; border-radius:50%; pointer-events:none; z-index:0; filter:blur(72px); }
-#blob1 { width:650px; height:550px; top:-80px; left:-120px;
-  background:radial-gradient(circle, rgba(139,92,246,.52) 0%, transparent 68%);
-  animation: blobA 20s ease-in-out infinite alternate; }
-#blob2 { width:580px; height:580px; bottom:-120px; right:-80px;
-  background:radial-gradient(circle, rgba(59,130,246,.42) 0%, transparent 68%);
-  animation: blobB 26s ease-in-out infinite alternate; }
-#blob3 { width:460px; height:460px; top:35%; left:38%;
-  background:radial-gradient(circle, rgba(236,72,153,.28) 0%, transparent 70%);
-  animation: blobC 17s ease-in-out infinite alternate; }
-#blob4 { width:380px; height:320px; top:10%; right:15%;
-  background:radial-gradient(circle, rgba(6,182,212,.22) 0%, transparent 68%);
-  animation: blobD 22s ease-in-out infinite alternate-reverse; }
+/* ── Animated background blobs ── */
+.blob { position:fixed; border-radius:50%; pointer-events:none; z-index:0; filter:blur(80px); }
+#blob1 { width:680px; height:560px; top:-80px; left:-130px;
+  background:radial-gradient(circle, rgba(99,102,241,.38) 0%, transparent 68%);
+  animation: blobA 22s ease-in-out infinite alternate; }
+#blob2 { width:560px; height:560px; bottom:-100px; right:-80px;
+  background:radial-gradient(circle, rgba(6,182,212,.28) 0%, transparent 68%);
+  animation: blobB 28s ease-in-out infinite alternate; }
+#blob3 { width:440px; height:440px; top:35%; left:40%;
+  background:radial-gradient(circle, rgba(139,92,246,.2) 0%, transparent 70%);
+  animation: blobC 18s ease-in-out infinite alternate; }
+#blob4 { width:360px; height:300px; top:12%; right:18%;
+  background:radial-gradient(circle, rgba(56,189,248,.18) 0%, transparent 68%);
+  animation: blobD 24s ease-in-out infinite alternate-reverse; }
 @keyframes blobA {
   0%   { transform:translate(0,0) scale(1); }
   33%  { transform:translate(180px,120px) scale(1.25); }
@@ -90,26 +91,29 @@ body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#1e0b4
 .icon-btn:hover { background:rgba(255,255,255,.08); color:#e6edf3; }
 
 /* ── Week Grid ── */
-.week-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; position:relative; z-index:1; }
+.week-scroll {
+  overflow:auto; -webkit-overflow-scrolling:touch; position:relative; z-index:1;
+  height:calc(100vh - var(--header-h) - 76px); /* fills between header and habits bar */
+}
 .week-grid { display:flex; flex-direction:column; min-width:860px; }
 .week-row { display:grid; grid-template-columns:88px repeat(7,minmax(108px,1fr));
   border-bottom:1px solid rgba(255,255,255,.04); }
 
-/* Header row */
-.week-hdr-row { position:sticky; top:66px; z-index:12;
-  background:rgba(13,5,33,.96); backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(99,102,241,.2); }
+/* Header row — sticks to TOP of its own scroll container */
+.week-hdr-row { position:sticky; top:0; z-index:12;
+  background:rgba(7,9,15,.97); backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(99,102,241,.18); }
 .day-hdr { padding:8px 6px; text-align:center; font-size:11px; font-weight:700; color:#6e7681;
   border-right:1px solid rgba(255,255,255,.04); }
 .day-hdr.today { color:#a5b4fc; background:rgba(99,102,241,.08); }
 .day-hdr.today .day-num { color:#e6edf3; }
 .day-num { display:block; font-size:18px; font-weight:800; color:#c9d1d9; line-height:1.2; }
 .corner-cell { padding:8px 6px; display:flex; align-items:center; justify-content:center;
-  position:sticky; left:0; z-index:14; background:rgba(13,5,33,.96); }
+  position:sticky; left:0; z-index:14; background:rgba(7,9,15,.98); }
 
 /* Block label */
-.block-label { position:sticky; left:0; z-index:5; background:rgba(13,5,33,.97);
-  padding:10px 8px; border-right:1px solid rgba(255,255,255,.07);
+.block-label { position:sticky; left:0; z-index:5; background:rgba(7,9,15,.98);
+  padding:10px 8px; border-right:1px solid rgba(255,255,255,.06);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   cursor:pointer; transition:background .15s; }
 .block-label:hover { background:rgba(30,11,69,.9); }
@@ -151,8 +155,8 @@ body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#1e0b4
 
 /* ── Habits bar ── */
 #habits-bar { position:fixed; bottom:0; left:0; right:0; z-index:30;
-  background:rgba(13,5,33,.97); backdrop-filter:blur(18px);
-  border-top:1px solid rgba(99,102,241,.2); padding:10px 16px; }
+  background:rgba(7,9,15,.97); backdrop-filter:blur(18px);
+  border-top:1px solid rgba(99,102,241,.18); padding:10px 16px; }
 .habits-bar-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center;
   gap:8px; flex-wrap:wrap; }
 .habits-bar-label { font-size:10px; font-weight:700; color:#484f58;
@@ -292,7 +296,7 @@ body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#1e0b4
 <div id="ambient"></div>
 
 <!-- ══ HEADER ══ -->
-<header style="background:rgba(13,5,33,.92);backdrop-filter:blur(18px);border-bottom:1px solid rgba(139,92,246,.15);position:sticky;top:0;z-index:20">
+<header id="app-header" style="background:rgba(7,9,15,.95);backdrop-filter:blur(18px);border-bottom:1px solid rgba(99,102,241,.15);position:sticky;top:0;z-index:20">
   <div style="max-width:1200px;margin:0 auto;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <h1 style="font-size:15px;font-weight:700;color:#e6edf3;margin:0;letter-spacing:-.02em">✨ Mi Semana</h1>
@@ -313,8 +317,8 @@ body { margin:0; padding:0; background: radial-gradient(ellipse at 20% 0%,#1e0b4
 </header>
 
 <!-- ══ VISTA: SEMANA ══ -->
-<div id="view-semana" style="padding:12px 8px 0;position:relative;z-index:1">
-  <div class="week-scroll">
+<div id="view-semana" style="position:relative;z-index:1">
+  <div class="week-scroll" id="week-scroll">
     <div class="week-grid" id="week-grid"></div>
   </div>
 </div>
@@ -636,6 +640,7 @@ function initAppForProfile(name){
   if(!S.macros) S.macros=[];
   sv();
   updateProfChip(name);
+  setTimeout(syncHeaderH, 50); // recalculate after chip renders
   // Reset view to semana
   activeView='semana';
   document.getElementById('metodo-content').innerHTML=''; // allow re-render
@@ -1550,10 +1555,20 @@ function spawnParticles(){
   for(let i=0;i<10;i++){const p=document.createElement('div');p.className='p';p.style.cssText=`width:${sizes[i]}px;height:${sizes[i]}px;left:${3+i*9}%;background:radial-gradient(circle,${pColors[i]},transparent);animation-duration:${13+i*2.5}s;animation-delay:${i*1.8}s;`;document.body.appendChild(p);}
 }
 
+// ── Sync header height → CSS var (fixes sticky row overlap) ──────────────────
+function syncHeaderH(){
+  const h = document.getElementById('app-header')?.offsetHeight || 88;
+  document.documentElement.style.setProperty('--header-h', h+'px');
+  const scroll = document.getElementById('week-scroll');
+  if(scroll) scroll.style.height = `calc(100vh - ${h}px - 76px)`;
+}
+
 // ── Boot ───────────────────────────────────────────────────────────────────────
 (function boot(){
   spawnParticles();
   document.body.style.paddingBottom='76px';
+  syncHeaderH();
+  window.addEventListener('resize', syncHeaderH);
   const activeName = getActiveName();
   if(activeName){
     // Already have a profile — go straight in
