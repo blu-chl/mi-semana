@@ -125,7 +125,7 @@ body { margin:0; padding:0; background: var(--bg);
   background:var(--hdr); backdrop-filter:blur(14px);
   border-bottom:1px solid var(--bd2); }
 .day-hdr { padding:8px 6px; text-align:center; font-size:11px; font-weight:700; color:var(--t4);
-  border-right:1px solid var(--bd3); }
+  border-right:1px solid var(--bd3); position:relative; }
 .day-hdr.today { color:var(--acc); background:rgba(var(--acc-rgb),.06); }
 .day-hdr.today .day-num { color:var(--t1); }
 .day-num { display:block; font-size:18px; font-weight:800; color:var(--t2); line-height:1.2; }
@@ -168,6 +168,23 @@ body { margin:0; padding:0; background: var(--bg);
   font-size:18px; transition:.18s; display:flex; align-items:center; justify-content:center; }
 .week-cell:hover .add-cell-btn { border-color:rgba(var(--acc-rgb),.35); color:var(--acc);
   background:rgba(var(--acc-rgb),.04); }
+/* Copy buttons */
+.act-copy-btn { position:absolute; top:5px; right:5px; width:20px; height:20px;
+  border-radius:5px; border:none; background:var(--s2); color:var(--t3);
+  cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:.15s; z-index:2; }
+.act-card:hover .act-copy-btn { opacity:1; }
+.act-copy-btn:hover { background:rgba(var(--acc-rgb),.12); color:var(--acc); transform:scale(1.1); }
+.day-copy-btn { font-size:9px; color:var(--t4); background:transparent; border:none;
+  cursor:pointer; padding:1px 4px; border-radius:4px; transition:.13s; opacity:0; }
+.day-hdr:hover .day-copy-btn { opacity:1; }
+.day-copy-btn:hover { background:rgba(var(--acc-rgb),.1); color:var(--acc); }
+/* Copy day opts */
+.copy-day-opt { display:flex; align-items:center; gap:10px; padding:8px 12px;
+  border-radius:9px; cursor:pointer; border:1px solid var(--bd2); background:var(--s2);
+  transition:.15s; user-select:none; }
+.copy-day-opt:hover { border-color:rgba(var(--acc-rgb),.3); background:rgba(var(--acc-rgb),.05); }
+.copy-day-opt input[type=checkbox] { accent-color:var(--acc); width:15px; height:15px; cursor:pointer; }
 
 /* ── Habits bar ── */
 #habits-bar { position:fixed; bottom:0; left:0; right:0; z-index:30;
@@ -412,6 +429,22 @@ body { margin:0; padding:0; background: var(--bg);
       </div>
     </div>
     <button onclick="logOut()" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;border:1px solid var(--bd);background:transparent;color:var(--t3);font-size:13px;cursor:pointer;transition:.13s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">↩ Cambiar a otra pantalla de inicio</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: Copy activities ══ -->
+<div id="copy-modal" class="modal-overlay" onclick="if(event.target===this)closeCopyModal()">
+  <div class="modal-box" style="max-width:340px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h3 id="copy-modal-title" style="font-size:15px;font-weight:700;color:var(--t1);margin:0"></h3>
+      <button onclick="closeCopyModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--s2);color:var(--t3);cursor:pointer">✕</button>
+    </div>
+    <p id="copy-modal-sub" style="font-size:12px;color:var(--t3);margin:0 0 14px"></p>
+    <div id="copy-day-opts" style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="selectAllCopyDays()" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--bd);background:var(--s2);color:var(--t3);font-size:12px;font-weight:600;cursor:pointer">Todos</button>
+      <button onclick="executeCopy()" style="flex:2;padding:8px;border-radius:9px;border:none;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Copiar →</button>
+    </div>
   </div>
 </div>
 
@@ -1111,6 +1144,7 @@ function renderGrid(){
     html+=`<div class="day-hdr${isToday?' today':''}">
       <span style="font-size:10px;font-weight:700;letter-spacing:.04em">${DAY_SHORT[dow].toUpperCase()}</span>
       <span class="day-num">${dateNum}</span>
+      <button class="day-copy-btn" onclick="event.stopPropagation();openCopyDayModal(${dow})" title="Copiar día completo">📋</button>
     </div>`;
   });
   html+='</div>';
@@ -1138,6 +1172,7 @@ function renderGrid(){
         html+=`<div class="act-card" onclick="openActPanel(${dow},'${bl.id}')"
           style="border-left-color:${act.color||bl.color};${allDone?'opacity:.55':''}">
           ${allDone?'<div class="act-done-overlay">✓</div>':''}
+          <button class="act-copy-btn" onclick="event.stopPropagation();openCopyActModal(${dow},'${bl.id}')" title="Copiar actividad a otro día">📋</button>
           <div class="act-card-top">
             <span class="act-emoji">${esc(act.emoji||'📌')}</span>
             <span class="act-title" style="${allDone?'text-decoration:line-through;text-decoration-color:#484f58':''}">
@@ -1575,6 +1610,90 @@ function renderMetodo(){
   }
   function sectionHeader(emoji,title,subtitle,ac){return `<div style="display:flex;align-items:center;gap:12px;padding:22px 0 14px"><div style="width:38px;height:38px;border-radius:12px;background:rgba(${rgb(ac)},.12);border:1px solid rgba(${rgb(ac)},.25);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${emoji}</div><div style="flex:1"><p style="font-size:14px;font-weight:700;color:var(--t1);margin:0">${title}</p><p style="font-size:11px;color:var(--t3);margin:3px 0 0">${subtitle}</p></div></div>`;}
   el.innerHTML=sectionHeader('⚡','Metodología de Productividad','Adrià Solà Pastor · Estructurar el día con base científica','#6366f1')+METODO_CARDS.map(renderCard).join('');
+}
+
+// ── Copy activities ────────────────────────────────────────────────────────────
+let copyMode=null, copySrcDow=null, copySrcBlockId=null;
+
+function openCopyActModal(dow, blockId){
+  const act=S.week[dow]?.[blockId]; if(!act) return;
+  copyMode='act'; copySrcDow=dow; copySrcBlockId=blockId;
+  document.getElementById('copy-modal-title').textContent=`📋 Copiar actividad`;
+  document.getElementById('copy-modal-sub').textContent=`"${act.emoji||''} ${act.title}" → elige días de destino:`;
+  renderCopyDayOpts(dow);
+  document.getElementById('copy-modal').classList.add('open');
+}
+
+function openCopyDayModal(dow){
+  const acts=S.week[dow]||{};
+  const n=Object.keys(acts).length;
+  copyMode='day'; copySrcDow=dow; copySrcBlockId=null;
+  document.getElementById('copy-modal-title').textContent=`📋 Copiar ${DAY_FULL[dow]}`;
+  document.getElementById('copy-modal-sub').textContent=
+    n>0 ? `${n} actividad${n>1?'es':''} → elige días de destino:` : 'Este día no tiene actividades aún.';
+  renderCopyDayOpts(dow);
+  document.getElementById('copy-modal').classList.add('open');
+}
+
+function renderCopyDayOpts(excludeDow){
+  const el=document.getElementById('copy-day-opts'); if(!el) return;
+  el.innerHTML=WEEK_ORDER.map(dow=>{
+    if(dow===excludeDow) return '';
+    const hasActs=Object.keys(S.week[dow]||{}).length>0;
+    return `<label class="copy-day-opt">
+      <input type="checkbox" data-dow="${dow}">
+      <span style="font-size:18px">${['🟠','🔵','🟢','🟣','🟡','🔴','⚪'][WEEK_ORDER.indexOf(dow)]||'⚫'}</span>
+      <span style="font-size:13px;font-weight:600;color:var(--t2);flex:1">${DAY_FULL[dow]}</span>
+      ${hasActs?`<span style="font-size:10px;color:var(--t4)">tiene datos</span>`:''}
+    </label>`;
+  }).join('');
+}
+
+function selectAllCopyDays(){
+  document.querySelectorAll('#copy-day-opts input[type=checkbox]').forEach(cb=>cb.checked=true);
+}
+
+function closeCopyModal(){
+  document.getElementById('copy-modal').classList.remove('open');
+  copyMode=null; copySrcDow=null; copySrcBlockId=null;
+}
+
+function executeCopy(){
+  const checked=[...document.querySelectorAll('#copy-day-opts input[type=checkbox]:checked')];
+  if(!checked.length){toast('Selecciona al menos un día de destino');return;}
+  const targetDows=checked.map(cb=>parseInt(cb.dataset.dow));
+  let count=0;
+
+  if(copyMode==='act'){
+    const act=S.week[copySrcDow]?.[copySrcBlockId]; if(!act) return;
+    targetDows.forEach(tdow=>{
+      if(!S.week[tdow]) S.week[tdow]={};
+      S.week[tdow][copySrcBlockId]={
+        title:act.title, emoji:act.emoji, color:act.color,
+        subtasks:act.subtasks.map(s=>({id:uid(),text:s.text})),
+        ...(act.habitId?{habitId:act.habitId}:{})
+      };
+      count++;
+    });
+    toast(`Actividad copiada a ${count} día${count>1?'s':''} ✓`);
+  } else if(copyMode==='day'){
+    const srcBlocks=S.week[copySrcDow]||{};
+    if(!Object.keys(srcBlocks).length){toast('Este día no tiene actividades');return;}
+    targetDows.forEach(tdow=>{
+      if(!S.week[tdow]) S.week[tdow]={};
+      Object.entries(srcBlocks).forEach(([blId,act])=>{
+        S.week[tdow][blId]={
+          title:act.title, emoji:act.emoji, color:act.color,
+          subtasks:act.subtasks.map(s=>({id:uid(),text:s.text})),
+          ...(act.habitId?{habitId:act.habitId}:{})
+        };
+      });
+      count++;
+    });
+    const n=Object.keys(srcBlocks).length;
+    toast(`${n} actividad${n>1?'es':''} copiadas a ${count} día${count>1?'s':''} ✓`);
+  }
+  sv(); closeCopyModal(); renderGrid();
 }
 
 // ── Particles ──────────────────────────────────────────────────────────────────
