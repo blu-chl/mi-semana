@@ -286,6 +286,34 @@ body { margin:0; padding:0; background: var(--bg);
 .theme-swatch:hover { transform:scale(1.12); border-color:rgba(var(--acc-rgb),.6); }
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-thumb { background:var(--bd); border-radius:2px; }
+/* ── Template cards ── */
+.tpl-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+.tpl-card { border-radius:13px; border:1px solid var(--bd2); background:var(--s1);
+  overflow:hidden; cursor:pointer; transition:.18s; position:relative;
+  box-shadow:0 1px 3px var(--sha); }
+.tpl-card:hover { transform:translateY(-2px); box-shadow:0 5px 18px var(--sha);
+  border-color:rgba(var(--acc-rgb),.3); }
+.tpl-card-top { height:5px; width:100%; }
+.tpl-card-body { padding:11px 12px 10px; }
+.tpl-card-emoji { font-size:22px; line-height:1; margin-bottom:5px; }
+.tpl-card-name { font-size:12px; font-weight:700; color:var(--t1); line-height:1.3;
+  margin-bottom:3px; }
+.tpl-card-meta { font-size:10px; color:var(--t4); }
+.tpl-card-actions { display:flex; gap:5px; margin-top:9px; }
+.tpl-apply-btn { flex:1; padding:5px 6px; border-radius:7px; border:none;
+  font-size:11px; font-weight:700; cursor:pointer; transition:.13s;
+  background:rgba(var(--acc-rgb),.1); color:var(--acc); }
+.tpl-apply-btn:hover { background:var(--acc); color:#fff; }
+.tpl-del-btn { width:24px; height:24px; border-radius:7px; border:none;
+  background:transparent; color:var(--t4); cursor:pointer; font-size:11px;
+  transition:.13s; display:flex; align-items:center; justify-content:center; }
+.tpl-del-btn:hover { background:rgba(239,68,68,.12); color:#ef4444; }
+.tpl-preset-badge { position:absolute; top:8px; right:8px; font-size:8px;
+  font-weight:700; padding:2px 5px; border-radius:4px; background:rgba(var(--acc-rgb),.1);
+  color:var(--acc); text-transform:uppercase; letter-spacing:.04em; }
+/* Save form */
+.tpl-save-form { background:var(--s2); border:1px solid var(--bd2); border-radius:12px;
+  padding:14px 16px; margin-top:14px; }
 </style>
 </head>
 <body>
@@ -339,6 +367,7 @@ body { margin:0; padding:0; background: var(--bg);
         <button class="mnav-tab" id="mnav-metodo"    onclick="switchView('metodo')">🧠 Metodología</button>
         <button class="mnav-tab" id="mnav-tutorial"  onclick="switchView('tutorial')">📖 Tutorial</button>
       </div>
+      <button class="icon-btn" id="templates-btn" onclick="openTemplatesModal()" title="Plantillas de semana">🗂️ Plantillas</button>
       <button class="icon-btn" id="blocks-btn" onclick="openBlocksModal()" title="Gestionar bloques de tiempo">⚙️ Bloques</button>
       <button class="icon-btn" onclick="openThemeModal()" title="Cambiar tema de color">🎨</button>
       <div class="prof-chip" id="prof-chip" onclick="openProfileSwitcher()" title="Cambiar perfil"></div>
@@ -429,6 +458,47 @@ body { margin:0; padding:0; background: var(--bg);
       </div>
     </div>
     <button onclick="logOut()" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;border:1px solid var(--bd);background:transparent;color:var(--t3);font-size:13px;cursor:pointer;transition:.13s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'">↩ Cambiar a otra pantalla de inicio</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: Templates ══ -->
+<div id="tpl-modal" class="modal-overlay" onclick="if(event.target===this)closeTemplatesModal()">
+  <div class="modal-box wide" style="max-width:560px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h3 style="font-size:16px;font-weight:700;color:var(--t1);margin:0">🗂️ Plantillas de Semana</h3>
+      <button onclick="closeTemplatesModal()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--s2);color:var(--t3);cursor:pointer">✕</button>
+    </div>
+    <!-- User templates section -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <p class="sec-label" style="margin:0">Mis plantillas</p>
+      <button onclick="toggleSaveForm()" id="save-tpl-toggle"
+        style="font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid rgba(var(--acc-rgb),.3);background:rgba(var(--acc-rgb),.07);color:var(--acc);cursor:pointer;font-weight:600;transition:.13s">
+        💾 Guardar semana actual
+      </button>
+    </div>
+    <!-- Save form (hidden by default) -->
+    <div id="tpl-save-form" class="tpl-save-form" style="display:none;margin-bottom:14px">
+      <p style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Nueva plantilla</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="tpl-emoji-inp" class="minput" type="text" placeholder="🗂️" maxlength="3"
+          style="width:52px;font-size:20px;text-align:center;padding:6px 0;flex-shrink:0">
+        <input id="tpl-name-inp" class="minput" type="text" placeholder="Nombre de la plantilla..."
+          maxlength="32" style="flex:1" onkeydown="if(event.key==='Enter')saveTemplate()">
+      </div>
+      <div style="margin-bottom:12px">
+        <p style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin:0 0 7px">Color</p>
+        <div id="tpl-colors" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="toggleSaveForm()" style="flex:1;padding:8px;border-radius:9px;border:1px solid var(--bd);background:transparent;color:var(--t3);font-size:13px;cursor:pointer">Cancelar</button>
+        <button onclick="saveTemplate()" style="flex:2;padding:8px;border-radius:9px;border:none;background:var(--acc);color:#fff;font-size:13px;font-weight:700;cursor:pointer">Guardar plantilla</button>
+      </div>
+    </div>
+    <!-- User templates grid -->
+    <div id="tpl-user-grid" class="tpl-grid" style="margin-bottom:20px"></div>
+    <!-- Preset templates -->
+    <p class="sec-label" style="margin:0 0 10px">Plantillas de ejemplo</p>
+    <div id="tpl-preset-grid" class="tpl-grid"></div>
   </div>
 </div>
 
@@ -698,6 +768,7 @@ function initAppForProfile(name){
     }catch(e){}
   }
   if(!S.macros) S.macros=[];
+  if(!S.templates) S.templates=[];
   if(!S.themeId) S.themeId='gris';
   sv();
   applyTheme(S.themeId);
@@ -725,6 +796,7 @@ function switchView(view){
     const b=document.getElementById('mnav-'+v); if(b) b.classList.toggle('active',v===view);
   });
   document.getElementById('blocks-btn').style.display=view==='semana'?'':'none';
+  document.getElementById('templates-btn').style.display=view==='semana'?'':'none';
   document.getElementById('habits-bar').style.display=view==='semana'?'':'none';
   if(view==='metas')    renderMacros();
   if(view==='metodo')   renderMetodo();
@@ -1610,6 +1682,222 @@ function renderMetodo(){
   }
   function sectionHeader(emoji,title,subtitle,ac){return `<div style="display:flex;align-items:center;gap:12px;padding:22px 0 14px"><div style="width:38px;height:38px;border-radius:12px;background:rgba(${rgb(ac)},.12);border:1px solid rgba(${rgb(ac)},.25);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${emoji}</div><div style="flex:1"><p style="font-size:14px;font-weight:700;color:var(--t1);margin:0">${title}</p><p style="font-size:11px;color:var(--t3);margin:3px 0 0">${subtitle}</p></div></div>`;}
   el.innerHTML=sectionHeader('⚡','Metodología de Productividad','Adrià Solà Pastor · Estructurar el día con base científica','#6366f1')+METODO_CARDS.map(renderCard).join('');
+}
+
+// ── Templates ─────────────────────────────────────────────────────────────────
+// Preset templates usan los IDs de bloques por defecto (bl1-bl10)
+// Lunes=1 Mar=2 Mié=3 Jue=4 Vie=5 Sáb=6 Dom=0
+const PRESET_TEMPLATES = [
+  { id:'pre1', name:'Semana Deep Work', emoji:'🧠', color:'#6366f1',
+    week:{
+      1:{bl2:{title:'Ejercicio matutino',emoji:'🏃',color:'#10b981',subtasks:[{id:'p1a',text:'Calentamiento'},{id:'p1b',text:'30 min cardio'},{id:'p1c',text:'Estiramientos'}]},
+         bl3:{title:'Deep Work A',emoji:'🎯',color:'#6366f1',subtasks:[{id:'p1d',text:'Apaga notificaciones'},{id:'p1e',text:'Define el objetivo del bloque'},{id:'p1f',text:'Trabaja sin interrupciones'}]},
+         bl5:{title:'Deep Work B',emoji:'💡',color:'#8b5cf6',subtasks:[{id:'p1g',text:'Revisa avance matutino'},{id:'p1h',text:'Tareas secundarias'}]},
+         bl8:{title:'Proyecto personal',emoji:'🚀',color:'#ec4899',subtasks:[{id:'p1i',text:'30 min en el proyecto'}]}},
+      2:{bl2:{title:'Ejercicio matutino',emoji:'🏃',color:'#10b981',subtasks:[{id:'p2a',text:'Calentamiento'},{id:'p2b',text:'30 min cardio'},{id:'p2c',text:'Estiramientos'}]},
+         bl3:{title:'Deep Work A',emoji:'🎯',color:'#6366f1',subtasks:[{id:'p2d',text:'Apaga notificaciones'},{id:'p2e',text:'Define el objetivo'},{id:'p2f',text:'Trabaja sin interrupciones'}]},
+         bl5:{title:'Deep Work B',emoji:'💡',color:'#8b5cf6',subtasks:[{id:'p2g',text:'Revisión y tareas secundarias'}]},
+         bl8:{title:'Proyecto personal',emoji:'🚀',color:'#ec4899',subtasks:[{id:'p2h',text:'30 min en el proyecto'}]}},
+      3:{bl2:{title:'Ejercicio matutino',emoji:'🏃',color:'#10b981',subtasks:[{id:'p3a',text:'Calentamiento'},{id:'p3b',text:'30 min cardio'}]},
+         bl3:{title:'Deep Work A',emoji:'🎯',color:'#6366f1',subtasks:[{id:'p3c',text:'Apaga notificaciones'},{id:'p3d',text:'Trabaja sin interrupciones'}]},
+         bl5:{title:'Reuniones / Admin',emoji:'📋',color:'#f59e0b',subtasks:[{id:'p3e',text:'Revisar emails'},{id:'p3f',text:'Reuniones pendientes'}]},
+         bl8:{title:'Proyecto personal',emoji:'🚀',color:'#ec4899',subtasks:[{id:'p3g',text:'30 min en el proyecto'}]}},
+      4:{bl2:{title:'Ejercicio matutino',emoji:'🏃',color:'#10b981',subtasks:[{id:'p4a',text:'Calentamiento'},{id:'p4b',text:'30 min cardio'}]},
+         bl3:{title:'Deep Work A',emoji:'🎯',color:'#6366f1',subtasks:[{id:'p4c',text:'Apaga notificaciones'},{id:'p4d',text:'Trabaja sin interrupciones'}]},
+         bl5:{title:'Deep Work B',emoji:'💡',color:'#8b5cf6',subtasks:[{id:'p4e',text:'Tareas secundarias'}]},
+         bl8:{title:'Proyecto personal',emoji:'🚀',color:'#ec4899',subtasks:[{id:'p4f',text:'30 min en el proyecto'}]}},
+      5:{bl2:{title:'Ejercicio matutino',emoji:'🏃',color:'#10b981',subtasks:[{id:'p5a',text:'30 min cardio'}]},
+         bl3:{title:'Deep Work A',emoji:'🎯',color:'#6366f1',subtasks:[{id:'p5b',text:'Prioridad #1 de la semana'}]},
+         bl5:{title:'Revisión semanal',emoji:'📊',color:'#06b6d4',subtasks:[{id:'p5c',text:'¿Qué hice esta semana?'},{id:'p5d',text:'¿Qué mejorar?'},{id:'p5e',text:'Planificar próxima semana'}]}},
+      6:{}, 0:{} }
+  },
+  { id:'pre2', name:'Semana de Vacaciones', emoji:'🏖️', color:'#f59e0b',
+    week:{
+      1:{bl1:{title:'Despertar tranquilo',emoji:'☀️',color:'#f59e0b',subtasks:[{id:'v1a',text:'Sin alarma'},{id:'v1b',text:'Café con calma'}]},
+         bl6:{title:'Almuerzo especial',emoji:'🍽️',color:'#f97316',subtasks:[]},
+         bl10:{title:'Serie o lectura',emoji:'📺',color:'#8b5cf6',subtasks:[]}},
+      2:{bl1:{title:'Despertar tranquilo',emoji:'☀️',color:'#f59e0b',subtasks:[{id:'v2a',text:'Sin alarma'}]},
+         bl7:{title:'Salida o paseo',emoji:'🚶',color:'#10b981',subtasks:[{id:'v2b',text:'Desconectar del trabajo'}]},
+         bl9:{title:'Cena relax',emoji:'🌅',color:'#f59e0b',subtasks:[]}},
+      3:{bl1:{title:'Despertar tranquilo',emoji:'☀️',color:'#f59e0b',subtasks:[]},
+         bl6:{title:'Almuerzo especial',emoji:'🍽️',color:'#f97316',subtasks:[]},
+         bl10:{title:'Serie o lectura',emoji:'📺',color:'#8b5cf6',subtasks:[]}},
+      4:{bl1:{title:'Despertar tranquilo',emoji:'☀️',color:'#f59e0b',subtasks:[]},
+         bl7:{title:'Actividad libre',emoji:'🎨',color:'#ec4899',subtasks:[{id:'v4a',text:'Lo que te apetezca'}]}},
+      5:{bl1:{title:'Despertar tranquilo',emoji:'☀️',color:'#f59e0b',subtasks:[]},
+         bl6:{title:'Almuerzo especial',emoji:'🍽️',color:'#f97316',subtasks:[]},
+         bl10:{title:'Serie o lectura',emoji:'📺',color:'#8b5cf6',subtasks:[]}},
+      6:{bl1:{title:'Día libre',emoji:'🌞',color:'#fbbf24',subtasks:[{id:'v6a',text:'Sin agenda'}]},
+         bl7:{title:'Plan con amigos/familia',emoji:'👨‍👩‍👧',color:'#10b981',subtasks:[]}},
+      0:{bl1:{title:'Día libre',emoji:'🌞',color:'#fbbf24',subtasks:[]},
+         bl7:{title:'Descanso total',emoji:'😴',color:'#6366f1',subtasks:[]}} }
+  },
+  { id:'pre3', name:'Semana Fitness', emoji:'💪', color:'#10b981',
+    week:{
+      1:{bl2:{title:'Entrenamiento — Piernas',emoji:'🦵',color:'#10b981',subtasks:[{id:'f1a',text:'Calentamiento 10min'},{id:'f1b',text:'Sentadillas 4x12'},{id:'f1c',text:'Prensa 3x15'},{id:'f1d',text:'Estiramientos'}]},
+         bl1:{title:'Preparar comida sana',emoji:'🥗',color:'#34d399',subtasks:[{id:'f1e',text:'Meal prep del día'}]},
+         bl10:{title:'Descanso activo',emoji:'🧘',color:'#8b5cf6',subtasks:[{id:'f1f',text:'Meditación 10min'}]}},
+      2:{bl2:{title:'Entrenamiento — Pecho/Hombros',emoji:'💪',color:'#10b981',subtasks:[{id:'f2a',text:'Calentamiento'},{id:'f2b',text:'Press banca 4x10'},{id:'f2c',text:'Press hombro 3x12'},{id:'f2d',text:'Estiramientos'}]},
+         bl1:{title:'Preparar comida sana',emoji:'🥗',color:'#34d399',subtasks:[]}},
+      3:{bl2:{title:'Cardio',emoji:'🏃',color:'#06b6d4',subtasks:[{id:'f3a',text:'30 min cardio moderado'},{id:'f3b',text:'Caminar si no hay energía'}]},
+         bl10:{title:'Descanso activo',emoji:'🧘',color:'#8b5cf6',subtasks:[{id:'f3c',text:'Meditación o yoga'}]}},
+      4:{bl2:{title:'Entrenamiento — Espalda/Bíceps',emoji:'🏋️',color:'#10b981',subtasks:[{id:'f4a',text:'Calentamiento'},{id:'f4b',text:'Jalones 4x12'},{id:'f4c',text:'Remo 3x12'},{id:'f4d',text:'Estiramientos'}]},
+         bl1:{title:'Preparar comida sana',emoji:'🥗',color:'#34d399',subtasks:[]}},
+      5:{bl2:{title:'HIIT o funcional',emoji:'⚡',color:'#f59e0b',subtasks:[{id:'f5a',text:'20 min HIIT'},{id:'f5b',text:'Ejercicios funcionales'}]},
+         bl10:{title:'Planificar próxima semana',emoji:'📋',color:'#6366f1',subtasks:[{id:'f5c',text:'¿Progresos esta semana?'}]}},
+      6:{bl2:{title:'Entrenamiento — Brazos',emoji:'💪',color:'#10b981',subtasks:[{id:'f6a',text:'Bíceps 3x15'},{id:'f6b',text:'Tríceps 3x15'}]},
+         bl7:{title:'Caminata o deporte suave',emoji:'🚶',color:'#34d399',subtasks:[]}},
+      0:{bl10:{title:'Descanso total',emoji:'😴',color:'#8b5cf6',subtasks:[{id:'f0a',text:'Recuperación muscular'}]}} }
+  },
+];
+
+let tplColorSel=0;
+let tplSaveFormOpen=false;
+
+function openTemplatesModal(){
+  tplSaveFormOpen=false;
+  document.getElementById('tpl-save-form').style.display='none';
+  renderTemplatesModal();
+  document.getElementById('tpl-modal').classList.add('open');
+}
+function closeTemplatesModal(){ document.getElementById('tpl-modal').classList.remove('open'); }
+
+function renderTemplatesModal(){
+  renderUserTemplates();
+  renderPresetTemplates();
+  buildTplColors();
+}
+
+function renderUserTemplates(){
+  const el=document.getElementById('tpl-user-grid'); if(!el) return;
+  if(!S.templates.length){
+    el.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:20px 10px;color:var(--t4)">
+      <div style="font-size:32px;margin-bottom:8px">🗂️</div>
+      <p style="font-size:13px;font-weight:600;color:var(--t3);margin:0 0 4px">Sin plantillas guardadas</p>
+      <p style="font-size:11px;margin:0">Usa "💾 Guardar semana actual" para crear la primera.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML=S.templates.map(t=>{
+    const days=Object.values(t.week||{}).filter(d=>Object.keys(d).length>0).length;
+    const acts=Object.values(t.week||{}).reduce((sum,d)=>sum+Object.keys(d).length,0);
+    return `<div class="tpl-card">
+      <div class="tpl-card-top" style="background:${t.color}"></div>
+      <div class="tpl-card-body">
+        <div class="tpl-card-emoji">${esc(t.emoji||'🗂️')}</div>
+        <div class="tpl-card-name">${esc(t.name)}</div>
+        <div class="tpl-card-meta">${days} día${days!==1?'s':''} · ${acts} actividad${acts!==1?'es':''}</div>
+        <div class="tpl-card-actions">
+          <button class="tpl-apply-btn" onclick="applyTemplate('${t.id}')">▶ Aplicar</button>
+          <button class="tpl-del-btn" onclick="deleteTemplate('${t.id}')" title="Eliminar">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPresetTemplates(){
+  const el=document.getElementById('tpl-preset-grid'); if(!el) return;
+  el.innerHTML=PRESET_TEMPLATES.map((t,i)=>{
+    const days=Object.values(t.week).filter(d=>Object.keys(d).length>0).length;
+    const acts=Object.values(t.week).reduce((sum,d)=>sum+Object.keys(d).length,0);
+    return `<div class="tpl-card">
+      <div class="tpl-card-top" style="background:${t.color}"></div>
+      <div class="tpl-card-body">
+        <div class="tpl-preset-badge">ejemplo</div>
+        <div class="tpl-card-emoji">${t.emoji}</div>
+        <div class="tpl-card-name">${esc(t.name)}</div>
+        <div class="tpl-card-meta">${days} días · ${acts} actividades</div>
+        <div class="tpl-card-actions">
+          <button class="tpl-apply-btn" onclick="applyPreset(${i})">▶ Aplicar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildTplColors(){
+  const el=document.getElementById('tpl-colors'); if(!el) return;
+  el.innerHTML=COLORS.map((c,i)=>`
+    <div class="swatch${i===tplColorSel?' sel':''}" style="background:${c}"
+      onclick="tplColorSel=${i};buildTplColors()"></div>`).join('');
+}
+
+function toggleSaveForm(){
+  tplSaveFormOpen=!tplSaveFormOpen;
+  const form=document.getElementById('tpl-save-form');
+  form.style.display=tplSaveFormOpen?'':'none';
+  if(tplSaveFormOpen){
+    buildTplColors();
+    setTimeout(()=>document.getElementById('tpl-name-inp')?.focus(),80);
+  }
+}
+
+function saveTemplate(){
+  const name=document.getElementById('tpl-name-inp')?.value?.trim();
+  if(!name){document.getElementById('tpl-name-inp')?.focus();return;}
+  const emoji=document.getElementById('tpl-emoji-inp')?.value?.trim()||'🗂️';
+  const color=COLORS[tplColorSel]||COLORS[0];
+  // Deep copy current week
+  const weekCopy={};
+  Object.entries(S.week).forEach(([dow,dayActs])=>{
+    weekCopy[dow]={};
+    Object.entries(dayActs).forEach(([blId,act])=>{
+      weekCopy[dow][blId]={
+        title:act.title, emoji:act.emoji, color:act.color,
+        subtasks:act.subtasks.map(s=>({id:uid(),text:s.text})),
+        ...(act.habitId?{habitId:act.habitId}:{})
+      };
+    });
+  });
+  S.templates.push({id:'tpl'+uid(), name, emoji, color, week:weekCopy, createdAt:Date.now()});
+  sv();
+  document.getElementById('tpl-name-inp').value='';
+  document.getElementById('tpl-emoji-inp').value='';
+  tplColorSel=0;
+  tplSaveFormOpen=false;
+  document.getElementById('tpl-save-form').style.display='none';
+  renderUserTemplates();
+  toast(`Plantilla "${name}" guardada ✓`);
+}
+
+function applyTemplate(id){
+  const tpl=S.templates.find(t=>t.id===id); if(!tpl) return;
+  if(!confirm(`¿Aplicar "${tpl.emoji} ${tpl.name}"?\nEsto reemplazará las actividades de toda la semana.`)) return;
+  _applyWeekData(tpl.week);
+  closeTemplatesModal();
+  toast(`Plantilla "${tpl.name}" aplicada ✓`);
+}
+
+function applyPreset(idx){
+  const tpl=PRESET_TEMPLATES[idx]; if(!tpl) return;
+  if(!confirm(`¿Aplicar "${tpl.emoji} ${tpl.name}"?\nEsto reemplazará las actividades de toda la semana.`)) return;
+  _applyWeekData(tpl.week);
+  closeTemplatesModal();
+  toast(`Plantilla "${tpl.name}" aplicada ✓`);
+}
+
+function _applyWeekData(weekData){
+  S.week={0:{},1:{},2:{},3:{},4:{},5:{},6:{}};
+  Object.entries(weekData).forEach(([dow,dayActs])=>{
+    S.week[dow]={};
+    Object.entries(dayActs).forEach(([blId,act])=>{
+      S.week[dow][blId]={
+        title:act.title, emoji:act.emoji, color:act.color,
+        subtasks:act.subtasks.map(s=>({id:uid(),text:s.text})),
+        ...(act.habitId?{habitId:act.habitId}:{})
+      };
+    });
+  });
+  sv(); renderGrid();
+}
+
+function deleteTemplate(id){
+  const tpl=S.templates.find(t=>t.id===id); if(!tpl) return;
+  if(!confirm(`¿Eliminar la plantilla "${tpl.name}"?`)) return;
+  S.templates=S.templates.filter(t=>t.id!==id);
+  sv(); renderUserTemplates();
+  toast('Plantilla eliminada');
 }
 
 // ── Copy activities ────────────────────────────────────────────────────────────
